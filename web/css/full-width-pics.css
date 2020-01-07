@@ -1,0 +1,128 @@
+@font-face {
+    font-family: fontS;
+    src: URL('../Shamery Font/f2.ttf') format('truetype');
+}
+html{
+    scroll-behavior: smooth;
+}
+body{
+    font-family: fontS;
+}
+nav{
+    background-color: #008800
+}
+header{
+    text-align: center;
+    font-weight: 900;
+    color: #FFF;
+}
+section{
+    border-top: #006600 solid 3px;
+}
+footer{
+    text-align: center;
+    color: #FFF;
+    background-color: #323232;
+    border-top: 3px #006600 solid;
+}
+#cards{
+    display: flex;
+    flex-wrap: wrap;
+    width: 50%;
+    margin-right: 0;
+}
+#sobre{
+    display: flex;
+}
+#conteudo-sobre{
+    width: 50%;
+    left: 0;
+}
+#disponiveis{
+    text-align: center;
+    font-weight: 900;
+    display: flex;
+}
+#imagens{
+    width: 100%;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+#titulo{
+    font-size:45px;
+}
+#navbar {
+    z-index: 2;
+    transition: top 0.3s;
+}
+
+.zoomimage{
+    display: block;
+    overflow:hidden;
+    margin:0;
+    cursor: pointer;
+    width: 100px;
+    height: 100px;
+    margin: auto
+}
+.zoomimage img{
+    width:100%;
+    transition: 0.3s;
+    cursor: pointer;
+
+}
+.zoomimage:hover img{
+    transform:scale(1.02);
+}
+
+
+.bg-image-full {
+    background: no-repeat center center scroll;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+}
+.conteudo-topo{
+    padding-top: 75px;
+    background-color: #008800;
+}
+.descricao{
+    width: 100%;
+}
+.card{
+    min-width: 200px;
+    width: 50%;
+    z-index: 0;
+}
+.card img{
+    max-width: 100%;
+    width: 100%;
+}
+.card-body{
+    padding: 10px;
+}
+.nav-item{
+    display: flex;
+    align-items: center;
+    font-size: 1.3rem;
+    font-family: fontS;
+}
+.ui-menubutton .ui-button-text{
+    font-size: 1.3rem;
+    font-family: fontS;
+    border: 0;
+    background-color: #008800;
+    color: rgba(255, 255, 255, 0.5);
+}
+.ui-menubutton:hover .ui-button-text{
+    color: rgba(255, 255, 255, 0.75);
+}
+.ui-menuitem-link{
+    width: calc(100% - 80px);
+}
+.navbar-brand{
+    font-size: 1.5rem
+}

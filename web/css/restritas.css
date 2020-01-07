@@ -1,0 +1,84 @@
+html body{
+    width: 100%;
+    height: 100vh;
+    color: white;
+    background-image: url('../../images/1.png');
+    background-position: center;
+    background-repeat: repeat-y;
+    background-size: cover;
+}
+nav{
+    border-bottom: #ccc solid 1px;
+}
+section{
+    border: 0;
+}
+footer{
+    border-top: #ccc solid 1px;
+    border-bottom: #ccc solid 1px;
+    bottom: 0;
+}
+#content{
+    margin: auto;
+}
+.todo{
+    border:#ccc solid 1px;
+    border-bottom: 0;
+    max-width: 2000px;
+    margin: auto;
+}
+.bg-pgr{
+    background-color: #323232;
+    border-left: #ccc solid 1px;
+    border-right: #ccc solid 1px;
+}
+.conteudo-topo{
+    padding-top: 75px;
+    background-color: #323232;
+    border-left: #ccc solid 1px;
+    border-right: #ccc solid 1px;
+}
+.conteudo{
+    height: calc(100vh - 197px);
+}
+.divcomplementar{
+    background-color: #323232;
+    max-width: 1996px;
+    margin: auto;
+}
+.ui-menubutton .ui-button-text{
+    font-size: 1.3rem;
+    font-family: fontS;
+    border: 0;
+    background-color: #008800;
+    color: rgba(255, 255, 255, 0.5);
+}
+.ui-menubutton:hover .ui-button-text{
+    color: rgba(255, 255, 255, 0.75);
+}
+.ui-menuitem-link{
+    width: calc(100% - 80px);
+}
+.ui-datatable{
+    border-top: 1px #ccc solid;
+    max-width: 1996px;
+    margin: auto;
+}
+.divisoria{
+    max-width: 2000px;
+    margin: auto;
+    background-color: #323232;
+}
+@media screen and (max-width: 600px) {
+    .bg-pgr{
+        border-left: 0;
+        border-right: 0;
+    }
+    .conteudo-topo{
+        border-left: 0;
+        border-right: 0;
+    }
+}
+@media screen and (max-width: 1200px) {
+    
+}

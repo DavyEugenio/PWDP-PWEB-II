@@ -1,0 +1,99 @@
+<ui:decorate xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://java.sun.com/jsf/core"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             template="template.xhtml"
+             xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <h:body onload="#{espacoBean.limpar();tipoBean.listar()}">
+        <h:form>
+            <section>
+                <div class="bg-pgr container">
+                    <h2>Gerenciador de Espaços:</h2>
+                    <p:panelGrid columns="2">
+                        <p:outputLabel value="ID"/>
+                        <p:outputLabel>#{espacoBean.espaco.id}</p:outputLabel>
+                        <p:outputLabel value="Tipo"/>
+                        <p:selectOneMenu value="#{espacoBean.espaco.id_tipo}">
+                            <c:forEach var="tipo" items="#{tipoBean.tipos}">
+                                <f:selectItem itemLabel="#{tipo.nome}" itemValue="#{tipo.id}"/>
+                            </c:forEach>
+                        </p:selectOneMenu>
+                        <p:outputLabel value="Descrição"/>
+                        <p:outputPanel>
+                            <p:inputText id="descricao" disabled="#{espacoBean.disabledDesc()}" value="#{espacoBean.espaco.descricao}" style="vertical-align: middle"/>
+                            <p:inputSwitch value="#{espacoBean.desc}" style="float: right; vertical-align: middle">
+                                <p:ajax event="change" update="descricao" />
+                            </p:inputSwitch>
+                        </p:outputPanel>
+                        <p:outputLabel value="Número"/>
+                        <p:outputPanel>
+                            <p:spinner id="numero" value="#{espacoBean.espaco.numero}" disabled="#{espacoBean.disabledNum()}" min="1" max="30" style="width: 50px"/>
+                            <p:inputSwitch value="#{espacoBean.num}" style="float: right; vertical-align: middle">
+                                <p:ajax event="change" update="numero" />
+                            </p:inputSwitch>
+                        </p:outputPanel>
+                        <p:outputLabel value="Status"></p:outputLabel>
+                        <p:selectBooleanButton value="#{espacoBean.espaco.status}" onLabel="Disponivel" offLabel="Indisponivel"/>
+                        <p:commandButton value="Salvar" icon="pi pi-save" action="#{espacoBean.adicionar()}" update="@form"/>
+                        <p:commandButton value="Limpar" icon="pi pi-times" action="#{espacoBean.limpar()}" update="@form"/>
+                    </p:panelGrid>
+                    <h2>Espaços Salvos:</h2>
+                    <p:spacer/>
+                </div>
+            </section>
+            <p:dataTable value="#{espacoBean.espacos}" var="esp">
+                <p:column headerText="ID" sortBy="#{esp.id}" filterBy="#{esp.id}">
+                    <h:outputText value="#{esp.id}"/>
+                </p:column>
+                <p:column headerText="Tipo" sortBy="#{esp.id_tipo}" filterBy="#{tipoBean.buscar(esp.id_tipo);tipoBean.tipo.nome}">
+                    <h:outputText value="#{tipoBean.buscar(esp.id_tipo);tipoBean.tipo.nome}"/>
+                </p:column>
+                <p:column headerText="Descrição" sortBy="#{esp.descricao}" filterBy="#{esp.descricao}">
+                    <h:outputText value="#{esp.descricao}"/>
+                </p:column>
+                <p:column headerText="Número" sortBy="#{espacoBean.numero(esp.numero)}" filterBy="#{espacoBean.numero(esp.numero)}">
+                    <h:outputText value="#{espacoBean.numero(esp.numero)}"/>
+                </p:column>
+                <p:column headerText="Status" sortBy="#{esp.status}" filterBy="#{esp.getStatus()}">
+                    <h:outputText value="#{esp.getStatus()}"/>
+                </p:column>
+                <p:column headerText="Qtd. de horários reservados" sortBy="#{horarioBean.qtdHorariosE(esp.id)}" filterBy="#{horarioBean.qtdHorariosE(esp.id)}">
+                    <h:outputText value="#{horarioBean.qtdHorariosE(esp.id)}"/>
+                </p:column>
+                <p:column style="width:210px">
+                    <p:commandLink update="@form" oncomplete="PF('dialog').show()">
+                        <h:outputText styleClass="ui-icon pi pi-search" style="margin:0 auto;" />
+                        <f:setPropertyActionListener value="#{esp}" target="#{espacoBean.espacoSelecionado}" />
+                    </p:commandLink>
+                    <p:spacer width="10px"/>
+                    <p:commandButton value="Editar" icon="pi pi-pencil" action="#{espacoBean.editar(esp)}" update="@form"/>
+                    <p:spacer width="5px"/>
+                    <p:commandButton value="Excluir" icon="pi pi-trash" action="#{espacoBean.excluir(esp)}" update="@form">
+                        <p:confirm header="Confirmação" message="Você está certo em excluir o espaço: #{espacoBean.nome(esp.id)}?" icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+            <p:dialog header="Informações" widgetVar="dialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <p:outputPanel style="text-align:center;">
+                    <p:panelGrid  columns="2" rendered="#{not empty espacoBean.espacoSelecionado}" columnClasses="label,value">
+                        <f:facet name="header">
+                            <h:outputText value="#{espacoBean.nome(espacoBean.espacoSelecionado.id)}" />
+                        </f:facet>
+                        <h:outputText value="ID:" />
+                        <h:outputText value="#{espacoBean.espacoSelecionado.id}" />
+                        <h:outputText value="Descrição:" />
+                        <h:outputText value="#{espacoBean.nome(espacoBean.espacoSelecionado.id)}" />
+                        <h:outputText value="Número:"/>
+                        <h:outputText value="#{espacoBean.espacoSelecionado.numero}" />
+                        <h:outputText value="Status:"/>
+                        <h:outputText value="#{espacoBean.espacoSelecionado.getStatus()}" />
+                        <h:outputText value="Qtd. de horários reservados:"/>
+                        <h:outputText value="#{horarioBean.qtdHorariosE(espacoBean.espacoSelecionado.id)}" />
+                    </p:panelGrid>
+                </p:outputPanel>
+            </p:dialog>
+            <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
+        </h:form>
+    </h:body>
+</ui:decorate>

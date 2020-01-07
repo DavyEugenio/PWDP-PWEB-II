@@ -1,0 +1,238 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <h:head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+        <title>SRO-IO</title>
+        <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="css/full-width-pics.css" rel="stylesheet"/>
+        <link href="css/modalimage.css" rel="stylesheet"/>
+        <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap-grid.css" type="text/css"/>
+    </h:head>
+    <h:body>
+        <script type="text/javascript">
+            function handleLoginRequest(xhr, status, args) {
+                if (args.validationFailed || !args.loggedIn) {
+                    PF('loginDlg').jq.effect("shake", {times: 5}, 100);
+                } else {
+                    PF('loginDlg').hide();
+                    $('#loginLink').fadeOut();
+                }
+            }
+        </script>
+        <h:form>
+            <p:dialog header="Login" widgetVar="loginDlg" resizable="false">
+                <h:panelGrid columns="2" cellpadding="5">
+                    <h:outputLabel id="imatricula" value="Matrícula(#{usuarioAbstratoBean.tipoMatricula(loginBean.tipo)}):" />
+                    <p:inputMask id="matricula" mask="#{loginBean.mascara()}" value="#{loginBean.matricula}"/>
+                    <h:outputLabel value="Senha:" />
+                    <p:password value="#{loginBean.senha}" required="true" label="password" />
+                    <p:outputLabel value="Tipo"/>
+                    <p:selectOneButton value="#{loginBean.tipo}" required="true">
+                        <f:selectItem itemLabel="Aluno" itemValue="A" />
+                        <f:selectItem itemLabel="Servidor" itemValue="S" />
+                        <f:selectItem itemLabel="Outro" itemValue="OR" />
+                        <p:ajax event="change" update="imatricula,matricula" />
+                    </p:selectOneButton>
+                    <f:facet name="footer">
+                        <p:commandButton value="Login" icon="pi pi-sign-in" update="growl" action="#{loginBean.login()}" oncomplete="handleLoginRequest(xhr, status, args)" />
+                    </f:facet>
+                </h:panelGrid>
+            </p:dialog>
+            <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
+        </h:form>
+        <nav id="navbar" class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="index.xhtml">SRO-EI</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="#">Início
+                                <span class="sr-only">(current)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#sessao1">Sobre</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#sessao2">Espaços Disponiveis</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#sessao3">Contato</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link">
+                                <button style="font-size: 1.3rem" class="btn btn-success" onclick="PF('loginDlg').show();">Login</button>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="conteudo-topo"></div>
+        <header class="py-5 bg-image-full" style="background-image: url('images/13.jpg')">
+            <h1 id='titulo'>Sistema de Reservas Online para <br/> Espaços Institucionais</h1>
+            <h2>Faça a reserva do seu espaço, sendo este: Laboratorio, Sala de aula, Auditório ou Quadra.</h2>
+        </header>
+        <section id="sessao1" class="py-5">
+            <div class="container">
+                <h1>Sobre:</h1>
+                <div id="sobre">
+                    <div id="conteudo-sobre">
+                        <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid, suscipit, rerum quos facilis repellat architecto commodi officia atque nemo facere eum non illo voluptatem quae delectus odit vel itaque amet.</p>
+                    </div>
+                    <div columns="2" id="cards" class="container">
+                        <div class="card">
+                            <div class="card-body">
+                                <img class="modalImage" src="images/8.jpg" alt="Quadra"/>
+                                <div class="overlay" onclick="abrirModal(1)">
+                                    <div class="text"><h3>Quadra</h3></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <img class="modalImage" src="images/9.jpg" alt="Laborátorio"/>
+                                <div class="overlay" onclick="abrirModal(2)">
+                                    <div class="text"><h3>Laboratório</h3></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <img class="modalImage" src="images/15.png" alt="Sala de Aula"/>
+                                <div class="overlay" onclick="abrirModal(3)">
+                                    <div class="text"><h3>Sala de Aula</h3></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <img class="modalImage" src="images/8.jpg" alt="Quadra"/>
+                                <div class="overlay" onclick="abrirModal(1)">
+                                    <div class="text"><h3>Quadra</h3></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="sessao2" class="py-5">
+            <div class="container">
+                <h1>Espaços Disponiveis:</h1>
+                <div id="disponiveis">
+                    <div id='imagens'>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/2.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Lab. de Química</p>
+                                </h3>
+                            </div>
+                        </div>
+                        <p:spacer width="30px"/>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/4.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Lab. de Edificações</p>
+                                </h3>
+                            </div>
+                        </div>
+                        <p:spacer width="30px"/>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/3.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Lab. de Informática </p>
+                                </h3>
+                            </div>
+                        </div>
+                        <p:spacer width="30px"/>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/7.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Lab. de AgroIndústria</p>
+                                </h3>
+                            </div>
+                        </div>
+                        <p:spacer width="30px"/>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/8.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Salas de Aula</p>
+                                </h3>
+                            </div>
+                        </div>
+                        <p:spacer width="30px"/>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/6.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Quadra Poliesportiva</p>
+                                </h3>
+                            </div>
+                        </div>
+                        <p:spacer width="30px"/>
+                        <div class="imagem">
+                            <div class="zoomimage">
+                                <img src="images/5.png"/>
+                            </div>
+                            <div class="descricao">
+                                <h3>
+                                    <p>Auditório</p>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="sessao3" class="py-5">
+            <div class="container">
+                <h2>Contato:</h2>
+            </div>
+        </section>
+        <section id="sessao4" class="py-5 bg-image-full" style="background-image: url('/images/1.png')">
+            <div style="height: 200px"></div>
+        </section>
+        <footer class="py-5">
+            <div class="container">
+                <p class="m-0 text-center ">Copyright &copy; Your Website 2019</p>
+            </div>
+        </footer>
+        <div id="modalImages" class="modal">
+            <span class="close">x</span>
+            <img class="modal-content" id="modalImg"/>
+            <h3>
+                <div id="caption"></div>
+            </h3>
+        </div>
+        <script src="js/navbar.js"/>
+        <script src="js/modalimage.js"/>
+        <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"/>
+    </h:body>
+</html>

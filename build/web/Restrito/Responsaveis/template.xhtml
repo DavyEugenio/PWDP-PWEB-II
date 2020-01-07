@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://java.sun.com/jsf/facelets">
+    <h:head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+        <title>SRO-IO - #{usuarioAbstratoBean.logado.nome}</title>
+        <link href="../../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="../../css/full-width-pics.css" rel="stylesheet"/>
+        <link href="../../css/modalimage.css" rel="stylesheet"/>
+        <link href="../../vendor/bootstrap/css/bootstrap-grid.css" rel="stylesheet"/>
+        <link href="../../css/restritas.css" rel="stylesheet"/>
+    </h:head>
+    <h:body class="bg-dark">
+        <h:form>
+            <nav id="navbar" class="navbar navbar-expand-lg navbar-dark fixed-top">
+                <div class="container">
+                    <a class="navbar-brand" href="index.xhtml">SRO-EI</a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarResponsive">
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item active">
+                                <p:link style="font-size: 1.3rem;font-family: fontS;" class="nav-link" value="Início"  outcome="index.xhtml?faces-redirect=true"/>
+                            </li>
+                            <li class="nav-item">
+                                <p:link style="font-size: 1.3rem;font-family: fontS;" class="nav-link" outcome="HorariosReservados" value="Reservas em Espera"/>
+                            </li>
+                            <li class="nav-item">
+                                <p:link style="font-size: 1.3rem;font-family: fontS;" class="nav-link" outcome="GerenciadorHorarios" value="Gerenciar de Reservas"/>
+                            </li>
+                            <li class="nav-item">
+                                <p:link style="font-size: 1.3rem;font-family: fontS;" class="nav-link" outcome="Dados" value="Seus Dados"/>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <p:commandButton style="font-size: 1.3rem;font-family: fontS;" value="Sair" action="#{loginBean.sair()}">
+                                        <p:confirm header="Sair" message="Você está certo querer em sair?" icon="pi pi-exclamation-triangle" />
+                                    </p:commandButton>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+            </p:confirmDialog>
+            <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
+        </h:form>
+        <div class="todo">
+            <div id="content">
+                <div class="container conteudo-topo"></div>
+                <ui:insert>
+                </ui:insert>
+            </div>
+            <div class="divcomplementar">
+                <div id="complementar"></div>
+            </div>
+        </div>
+        <footer class="py-5">
+            <div class="container">
+                <p class="m-0 text-center ">Copyright &copy; Your Website 2019</p>
+            </div>
+        </footer>
+        <script src="../../js/divComplementar.js"/>
+        <script src="../../js/locale_ptBR.js"/>
+        <script src="../../js/navbar.js"/>
+        <script src="../../vendor/bootstrap/js/bootstrap.bundle.min.js"/>
+    </h:body>
+</html>
+

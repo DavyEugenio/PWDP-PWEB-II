@@ -1,0 +1,76 @@
+<ui:decorate xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://java.sun.com/jsf/core"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             template="template.xhtml"
+             xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <h:body onload="#{horarioBean.limpar();usuarioAbstratoBean.limpar()}">
+        <h:form>
+            <section>
+                <div class="bg-pgr container">
+                    <h2>Busca por intervalo de tempo:</h2>
+                    <p:panelGrid id="busca" columns="2">
+                        <p:outputLabel value="Início"/>
+                        <p:calendar value="#{horarioBean.inicioB}" pattern="dd/MM/yyyy HH:mm"/>
+                        <p:outputLabel value="Final"/>
+                        <p:calendar value="#{horarioBean.finalB}" pattern="dd/MM/yyyy HH:mm"/>
+                        <p:commandButton value="Buscar" icon="pi pi-search" action="#{horarioBean.buscarIntervaloEmEspera()}" update="tabela"/>
+                        <p:commandButton value="Cancelar" icon="pi pi-times" action="#{horarioBean.cancelarBusca()}" update="tabela"/>
+                    </p:panelGrid>
+                    <h2>Reservas em Espera:</h2>
+                    <p:spacer/>
+                </div>
+            </section>
+            <p:dataTable id="tabela" value="#{horarioBean.horariosEmEspera}" var="hor">
+                <p:column headerText="ID" width="5%" sortBy="#{hor.id}" filterBy="#{hor.id}">
+                    <h:outputText value="#{hor.id}"/>
+                </p:column>
+                <p:column headerText="Data" width="10%" sortBy="#{horarioBean.formatarData(hor.entrada)}" filterBy="#{horarioBean.formatarData(hor.entrada)}">
+                    <h:outputText value="#{horarioBean.formatarData(hor.entrada)}"/>
+                </p:column>
+                <p:column headerText="Entrada" width="7%" sortBy="#{horarioBean.formatarHora(hor.entrada)}" filterBy="#{horarioBean.formatarHora(hor.entrada)}">
+                    <h:outputText value="#{horarioBean.formatarHora(hor.entrada)}"/>
+                </p:column>
+                <p:column headerText="Saida" width="7%" sortBy="#{horarioBean.formatarHora(hor.saida)}" filterBy="#{horarioBean.formatarHora(hor.saida)}">
+                    <h:outputText value="#{horarioBean.formatarHora(hor.saida)}"/>
+                </p:column>
+                <p:column headerText="Responsável" sortBy="#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.usuario.nome }" filterBy="#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.usuario.nome }">
+                    <h:outputText value="#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.usuario.nome }"/><br/>
+                    <h:outputText value="(#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.getTipo(usuarioAbstratoBean.usuario)})"/>
+                </p:column>
+                <p:column headerText="Espaço" width="15%" sortBy="#{espacoBean.nome(hor.id_espaco)}" filterBy="#{espacoBean.nome(hor.id_espaco)}">
+                    <h:outputText value="#{espacoBean.nome(hor.id_espaco)}"/>
+                </p:column>
+                <p:column headerText="Info." style="width: 40px">
+                    <p:commandLink update="@form" oncomplete="PF('dialog').show()">
+                        <h:outputText styleClass="ui-icon pi pi-search" style="margin:0 auto;" />
+                        <f:setPropertyActionListener value="#{hor}" target="#{horarioBean.horarioSelecionado}" />
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <p:dialog header="Informações" widgetVar="dialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <p:outputPanel style="text-align:center;">
+                    <p:panelGrid  columns="2" rendered="#{not empty horarioBean.horarioSelecionado}" columnClasses="label,value">
+                        <f:facet name="header">
+                            <h:outputText value="(#{horarioBean.formatarData(horarioBean.horarioSelecionado.entrada)})  #{horarioBean.formatarHora(horarioBean.horarioSelecionado.entrada)} - #{horarioBean.formatarHora(horarioBean.horarioSelecionado.saida)}" />
+                        </f:facet>
+                        <h:outputText value="ID:"/>
+                        <h:outputText value="#{horarioBean.horarioSelecionado.id}"/>
+                        <h:outputText value="Data:"/>
+                        <h:outputText value="#{horarioBean.formatarData(horarioBean.horarioSelecionado.entrada)}"/>
+                        <h:outputText value="Entrada:"/>
+                        <h:outputText value="#{horarioBean.formatarHora(horarioBean.horarioSelecionado.entrada)}"/>
+                        <h:outputText value="Saida:"/>
+                        <h:outputText value="#{horarioBean.formatarHora(horarioBean.horarioSelecionado.saida)}"/>
+                        <h:outputText value="Espaço reservado:"/>
+                        <h:outputText value="#{espacoBean.nome(horarioBean.horarioSelecionado.id_espaco)}"/>
+                        <h:outputText value="Nome do responsável:"/>
+                        <h:outputText value="#{usuarioAbstratoBean.buscar(horarioBean.horarioSelecionado.matricula_responsavel);usuarioAbstratoBean.usuario.nome}"/>
+                    </p:panelGrid>
+                </p:outputPanel>
+            </p:dialog>
+            <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
+        </h:form>
+    </h:body>
+</ui:decorate>
