@@ -1,6 +1,8 @@
 package DAO;
 
+import Excecoes.DAOHorarioVazioException;
 import Excecoes.HorarioIntercaladoException;
+import Excecoes.HorarioNaoEncontradoException;
 import util.Conversoes;
 import entidades.Horario;
 import java.sql.Connection;
@@ -19,7 +21,7 @@ public class HorarioDAO {
     public HorarioDAO() {
     }
 
-    private boolean ValidarHorario(Horario h, int chamada) throws HorarioIntercaladoException, SQLException {
+    private boolean validarHorario(Horario h, int chamada) throws HorarioIntercaladoException, SQLException {
         Connection conexao = FabricaConexao.getConexao();
         boolean validade;
         String sql;
@@ -70,8 +72,8 @@ public class HorarioDAO {
         return validade;
     }
 
-    public void Salvar(Horario horario) throws SQLException, HorarioIntercaladoException {
-        if (ValidarHorario(horario, 1) == true) {
+    public void salvar(Horario horario) throws SQLException, HorarioIntercaladoException {
+        if (validarHorario(horario, 1) == true) {
             Connection conexao = FabricaConexao.getConexao();
             PreparedStatement pst = conexao.prepareStatement("INSERT INTO `horario` (`entrada`,`saida`,`matricula_usuario`,`id_espaco`,`status`) value (?,?,?,?,?)");
             pst.setString(1, horario.getEntrada().format(c.formatoLDT));
@@ -87,8 +89,8 @@ public class HorarioDAO {
         }
     }
 
-    public void Alterar(Horario horario) throws SQLException, HorarioIntercaladoException {
-        if (ValidarHorario(horario, 2) | !(horario.getStatus().equals("Em espera"))) {
+    public void alterar(Horario horario) throws SQLException, HorarioIntercaladoException, HorarioNaoEncontradoException {
+        if (validarHorario(horario, 2) | !(horario.getStatus().equals("Em espera"))) {
             Connection conexao = FabricaConexao.getConexao();
             PreparedStatement pst = conexao.prepareStatement("UPDATE `horario` SET `entrada`=?,`saida`=?,`matricula_usuario`=?,`id_espaco`=?,`status`=? WHERE id = ?");
             pst.setString(1, horario.getEntrada().format(c.formatoLDT));
@@ -97,7 +99,11 @@ public class HorarioDAO {
             pst.setInt(4, horario.getId_espaco());
             pst.setString(5, horario.getStatus());
             pst.setInt(6, horario.getId());
-            pst.execute();
+            if (pst.executeUpdate() == 0) {
+                FabricaConexao.fecharConexao();
+                pst.close();
+                throw new HorarioNaoEncontradoException();
+            }
             FabricaConexao.fecharConexao();
             pst.close();
         } else {
@@ -105,90 +111,16 @@ public class HorarioDAO {
         }
     }
 
-    public List<Horario> Listar() throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
+    public List<Horario> listar() throws SQLException, DAOHorarioVazioException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario`");
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
-        }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
-    }
-
-    public List<Horario> ListarEmEspera() throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
-        Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `status` = 'Em espera'");
-        ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
-        }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
-    }
-    
-    public Horario Buscar(int id) throws SQLException {
-        Horario horario = null;
-        Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `id` = ?");
-        pst.setInt(1, id);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next() == false) {
+        if (!rs.isBeforeFirst()) {
             pst.close();
             FabricaConexao.fecharConexao();
+            throw new DAOHorarioVazioException();
         } else {
-            horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-        }
-        pst.close();
-        FabricaConexao.fecharConexao();
-
-        return horario;
-    }
-
-    public void Excluir(int id) throws SQLException {
-        Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("DELETE FROM `horario` WHERE `id` = ?");
-        pst.setInt(1, id);
-        pst.execute();
-        FabricaConexao.fecharConexao();
-
-    }
-
-    public List<Horario> BuscarPorEspaco(int id_espaco) throws SQLException {
-        List<Horario> horarios = null;
-        Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `id_espaco` = ?");
-        pst.setInt(1, id_espaco);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next() == false) {
-            pst.close();
-            FabricaConexao.fecharConexao();
-        } else {
-            horarios = new ArrayList<>();
+            List<Horario> horarios = new ArrayList<>();
             while (rs.next()) {
                 Horario horario = new Horario();
                 horario.setId(rs.getInt("id"));
@@ -199,56 +131,144 @@ public class HorarioDAO {
                 horario.setStatus(rs.getString("status"));
                 horarios.add(horario);
             }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
     }
 
-    public List<Horario> BuscarPorResponsavel(String matricula) throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
+    public List<Horario> listarEmEsperaOuEmAndamento() throws SQLException, HorarioNaoEncontradoException {
+        Connection conexao = FabricaConexao.getConexao();
+        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `status` = 'Em espera' OR `status` = 'Em andamento'");
+        ResultSet rs = pst.executeQuery();
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return new ArrayList<>();
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
+        }
+    }
+
+    public Horario buscar(int id) throws SQLException, HorarioNaoEncontradoException {
+        Connection conexao = FabricaConexao.getConexao();
+        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `id` = ?");
+        pst.setInt(1, id);
+        ResultSet rs = pst.executeQuery();
+        if (!rs.next()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new HorarioNaoEncontradoException();
+        } else {
+            Horario horario = new Horario();
+            horario.setId(rs.getInt("id"));
+            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+            horario.setId_espaco(rs.getInt("id_espaco"));
+            horario.setStatus(rs.getString("status"));
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horario;
+        }
+    }
+    
+    public List<Horario> buscarPorEspaco(int id_espaco) throws SQLException {
+        Connection conexao = FabricaConexao.getConexao();
+        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `id_espaco` = ?");
+        pst.setInt(1, id_espaco);
+        ResultSet rs = pst.executeQuery();
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return null;
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
+        }
+    }
+
+    public List<Horario> buscarPorResponsavel(String matricula) throws SQLException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `matricula_usuario` = ?");
         pst.setString(1, matricula);
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return null;
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
     }
 
-    public List<Horario> BuscarPorEmEspera(String matricula) throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
+    public List<Horario> buscarPorEmEsperaOuEmAndamento(String matricula) throws SQLException, HorarioNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `matricula_usuario` = ? AND `status` = 'Em espera'");
+        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `matricula_usuario` = ? AND `status` = 'Em espera' OR `matricula_usuario` = ? AND `status` = 'Em andamento'");
         pst.setString(1, matricula);
+        pst.setString(2, matricula);
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return null;
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
     }
 
-    public List<Horario> BuscarPorIntervalo(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
+    public List<Horario> buscarPorIntervalo(LocalDateTime inicio, LocalDateTime fim) throws SQLException, HorarioNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `entrada` >= ? AND `entrada` <= ? OR `saida` >= ? AND `saida` <= ?");
         pst.setString(1, inicio.format(c.formatoLDT));
@@ -256,23 +276,29 @@ public class HorarioDAO {
         pst.setString(3, inicio.format(c.formatoLDT));
         pst.setString(4, fim.format(c.formatoLDT));
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new HorarioNaoEncontradoException();
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
     }
-    
-    public List<Horario> BuscarPorIntervaloPorResponsavel(LocalDateTime inicio, LocalDateTime fim, String matricula) throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
+
+    public List<Horario> buscarPorIntervaloPorResponsavel(LocalDateTime inicio, LocalDateTime fim, String matricula) throws SQLException, HorarioNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `entrada` >= ? AND `entrada` <= ? AND `matricula_usuario` = ? OR `saida` >= ? AND `saida` <= ? AND `matricula_usuario` = ?");
         pst.setString(1, inicio.format(c.formatoLDT));
@@ -282,56 +308,95 @@ public class HorarioDAO {
         pst.setString(5, fim.format(c.formatoLDT));
         pst.setString(6, matricula);
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new HorarioNaoEncontradoException();
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return horarios;
     }
-    
-    public List<Horario> BuscarPorIntervaloEmEspera(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
-        List<Horario> horarios = new ArrayList<>();
+
+    public List<Horario> buscarPorIntervaloEmEsperaOuEmAndamento(LocalDateTime inicio, LocalDateTime fim) throws SQLException, HorarioNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `horario` WHERE `entrada` >= ? AND `entrada` <= ? AND `status` = 'Em espera' OR `saida` >= ? AND `saida` <= ? AND `status` = 'Em espera'");
+        PreparedStatement pst = conexao.prepareStatement(""
+                + "SELECT * FROM `horario` WHERE "
+                + "`entrada` >= ? AND `entrada` <= ? AND `status` = 'Em espera' OR "
+                + "`entrada` >= ? AND `entrada` <= ? AND `status` = 'Em andamento' OR "
+                + "`saida` >= ? AND `saida` <= ? AND `status` = 'Em espera' OR "
+                + "`saida` >= ? AND `saida` <= ? AND `status` = 'Em andamento'");
         pst.setString(1, inicio.format(c.formatoLDT));
         pst.setString(2, fim.format(c.formatoLDT));
         pst.setString(3, inicio.format(c.formatoLDT));
         pst.setString(4, fim.format(c.formatoLDT));
+        pst.setString(5, inicio.format(c.formatoLDT));
+        pst.setString(6, fim.format(c.formatoLDT));
+        pst.setString(7, inicio.format(c.formatoLDT));
+        pst.setString(8, fim.format(c.formatoLDT));
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Horario horario = new Horario();
-            horario.setId(rs.getInt("id"));
-            horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
-            horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
-            horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
-            horario.setId_espaco(rs.getInt("id_espaco"));
-            horario.setStatus(rs.getString("status"));
-            horarios.add(horario);
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new HorarioNaoEncontradoException();
+        } else {
+            List<Horario> horarios = new ArrayList<>();
+            while (rs.next()) {
+                Horario horario = new Horario();
+                horario.setId(rs.getInt("id"));
+                horario.setEntrada(LocalDateTime.parse(rs.getString("entrada"), c.formatoLDT));
+                horario.setSaida(LocalDateTime.parse(rs.getString("saida"), c.formatoLDT));
+                horario.setMatricula_responsavel(rs.getString("matricula_usuario"));
+                horario.setId_espaco(rs.getInt("id_espaco"));
+                horario.setStatus(rs.getString("status"));
+                horarios.add(horario);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return horarios;
         }
-        pst.close();
+    }
+
+    public void excluir(int id) throws SQLException, HorarioNaoEncontradoException {
+        Connection conexao = FabricaConexao.getConexao();
+        PreparedStatement pst = conexao.prepareStatement("DELETE FROM `horario` WHERE `id` = ?");
+        pst.setInt(1, id);
+        if (pst.executeUpdate() == 0) {
+            FabricaConexao.fecharConexao();
+            pst.close();
+            throw new HorarioNaoEncontradoException();
+        }
         FabricaConexao.fecharConexao();
-        return horarios;
     }
     
-    public void AtualizarStatus() throws SQLException, HorarioIntercaladoException{
-        List<Horario> horarios = this.ListarEmEspera();
+    public void atualizarStatus() throws SQLException, HorarioIntercaladoException, HorarioNaoEncontradoException {
+        List<Horario> horarios = this.listarEmEsperaOuEmAndamento();
         for (Horario horario : horarios) {
-            if(horario.getSaida().compareTo(LocalDateTime.now()) <= 0){
+            if (horario.getSaida().compareTo(LocalDateTime.now()) <= 0) {
                 horario.setStatus("Finalizado");
-                Alterar(horario);
+                alterar(horario);
+            } else {
+                if (horario.getEntrada().compareTo(LocalDateTime.now()) <= 0) {
+                    horario.setStatus("Em andamento");
+                    alterar(horario);
+                }
             }
         }
     }
-    
-    public int ProximoId() throws SQLException {
+
+    public int proximoId() throws SQLException {
         int pid = 0;
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SHOW TABLE STATUS LIKE 'horario'");

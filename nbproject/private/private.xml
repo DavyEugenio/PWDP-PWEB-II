@@ -3,7 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/G:/PWEB/PWDP/src/java/DAO/HorarioDAO.java</file>
+            <file>file:/G:/IF/PW2/PWeb/PWDP/src/java/util/Conversoes.java</file>
+            <file>file:/G:/IF/PW2/PWeb/PWDP/web/Restrito/Operador/GerenciadorEspacos.xhtml</file>
+            <file>file:/G:/IF/PW2/PWeb/PWDP/src/java/controle/horarioBean.java</file>
+            <file>file:/G:/IF/PW2/PWeb/PWDP/src/java/controle/espacoBean.java</file>
         </group>
     </open-files>
 </project-private>

@@ -3,9 +3,13 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:ui="http://java.sun.com/jsf/facelets"
              template="template.xhtml"
-             xmlns:f="http://xmlns.jcp.org/jsf/core">
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
     <h:body onload="#{usuarioAbstratoBean.limpar()}">
         <h:form>
+            <script>
+                window.scroll(0, 0);
+            </script>
             <section>
                 <div class="bg-pgr container">
                     <h2>Gerenciador de Usuários:</h2>
@@ -18,11 +22,11 @@
                         <p:selectOneButton disabled="#{usuarioAbstratoBean.disabled}" value="#{usuarioAbstratoBean.tipo}">
                             <f:selectItem itemLabel="Aluno" itemValue="A" />
                             <f:selectItem itemLabel="Servidor" itemValue="S" />
-                            <f:selectItem itemLabel="Outro" itemValue="OR" />
                             <f:selectItem itemLabel="Operador" itemValue="O" />
-                            <p:ajax event="change" update="imatricula,matricula" />
+                            <f:selectItem itemLabel="Outro" itemValue="OR" />
+                            <p:ajax event="change" update="matricula,imatricula" />
                         </p:selectOneButton>
-                        <p:commandButton value="Salvar" icon="pi pi-save" action="#{usuarioAbstratoBean.adicionar()}" update="@form"/>
+                        <p:commandButton value="Salvar" icon="pi pi-save" onclick="PF('dlgSenha').show();" action="#{usuarioAbstratoBean.setOperacao('adicionar')}"/>
                         <p:commandButton value="Limpar" icon="pi pi-times" action="#{usuarioAbstratoBean.limpar()}" update="@form"/>
                     </p:panelGrid>
                     <h2>Operadores Salvos:</h2>
@@ -44,8 +48,9 @@
                     <p:spacer width="10px"/>
                     <p:commandButton value="Editar" icon="pi pi-pencil" action="#{usuarioAbstratoBean.editar(ua)}" update="@form"/>
                     <p:spacer width="5px"/>
-                    <p:commandButton value="Excluir" icon="pi pi-trash" action="#{usuarioAbstratoBean.excluir(ua)}" update="@form">
-                        <p:confirm header="Confirmação" message="Você está certo em excluir o usuario: #{ua.nome} (#{ua.matricula})?" icon="pi pi-exclamation-triangle" />
+                    <p:commandButton value="Excluir" icon="pi pi-trash" onclick="PF('dlgSenha').show();" action="#{usuarioAbstratoBean.setOperacao('excluir')}">
+                        <p:confirm header="Confirmação" message="Você está certo em excluir o usuário: #{ua.nome} (#{ua.matricula})?" icon="pi pi-exclamation-triangle" />
+                        <f:setPropertyActionListener value="#{ua}" target="#{usuarioAbstratoBean.usuarioSelecionado}" />
                     </p:commandButton>
                 </p:column>
             </p:dataTable>
@@ -68,6 +73,9 @@
                 <p:column width="10%" headerText="Qtd. de horários reservados" sortBy="#{horarioBean.qtdHorariosR(ua.matricula)}" filterBy="#{horarioBean.qtdHorariosR(ua.matricula)}">
                     <h:outputText value="#{horarioBean.qtdHorariosR(ua.matricula)}"/>
                 </p:column>
+                <p:column width="10%" headerText='Qtd. de reservas "Em espera" ou "Em andamento"' sortBy="#{horarioBean.qtdHorariosEmEsperaOuEmAndamento(ua.matricula)}" filterBy="#{horarioBean.qtdHorariosEmEsperaOuEmAndamento(ua.matricula)}">
+                    <h:outputText value="#{horarioBean.qtdHorariosEmEsperaOuEmAndamento(ua.matricula)}"/>
+                </p:column>
                 <p:column headerText="Opções" style="width:290px">
                     <p:commandLink update="@form" oncomplete="PF('dialog').show()">
                         <h:outputText styleClass="ui-icon pi pi-search" style="margin:0 auto;" />
@@ -76,12 +84,14 @@
                     <p:spacer width="10px"/>
                     <p:commandButton value="Editar" icon="pi pi-pencil" action="#{usuarioAbstratoBean.editar(ua)}" update="@form"/>
                     <p:spacer width="5px"/>
-                    <p:commandButton value="Excluir" icon="pi pi-trash" action="#{usuarioAbstratoBean.excluir(ua)}" update="@form">
-                        <p:confirm header="Confirmação" message="Você está certo em excluir o usuario: #{ua.nome} (#{ua.matricula})?" icon="pi pi-exclamation-triangle" />
+                    <p:commandButton value="Excluir" icon="pi pi-trash" onclick="PF('dlgSenha').show();" action="#{usuarioAbstratoBean.setOperacao('excluir')}">
+                        <p:confirm header="Confirmação" message="Você está certo em excluir o usuário: #{ua.nome} (#{ua.matricula})?" icon="pi pi-exclamation-triangle" />
+                        <f:setPropertyActionListener value="#{ua}" target="#{usuarioAbstratoBean.usuarioSelecionado}" />
                     </p:commandButton>
                     <p:spacer width="5px"/>
-                    <p:commandButton style="width: 75px" value="Resetar Senha" action="#{usuarioAbstratoBean.resetSenha(ua)}" update="@form">
-                        <p:confirm header="Confirmação" message="Você está certo em resetar a senha do usuario: #{ua.nome} (#{ua.matricula})?" icon="pi pi-exclamation-triangle" />
+                    <p:commandButton style="width: 75px" value="Resetar Senha" onclick="PF('dlgSenha').show();" action="#{usuarioAbstratoBean.setOperacao('resetSenha')}">
+                        <p:confirm header="Confirmação" message="Você está certo em resetar a senha do usuário: #{ua.nome} (#{ua.matricula})?" icon="pi pi-exclamation-triangle" />
+                        <f:setPropertyActionListener value="#{ua}" target="#{usuarioAbstratoBean.usuarioSelecionado}" />
                     </p:commandButton>
                 </p:column>
             </p:dataTable>
@@ -97,8 +107,17 @@
                         <h:outputText value="#{usuarioAbstratoBean.usuarioSelecionado.nome}" />
                         <h:outputText value="Tipo:"/>
                         <h:outputText value="#{usuarioAbstratoBean.getTipo(usuarioAbstratoBean.usuarioSelecionado)}" />
+                        <h:outputText value="Qtd. de horários reservados:"/>
+                        <h:outputText value="#{horarioBean.qtdHorariosR(usuarioAbstratoBean.usuarioSelecionado.matricula)}" />
+                        <h:outputText value='Qtd de horarios "Em espera" ou "Em andamento":'/>
+                        <h:outputText value="#{horarioBean.qtdHorariosEmEsperaOuEmAndamento(usuarioAbstratoBean.usuarioSelecionado.matricula)}" />
                     </p:panelGrid>
                 </p:outputPanel>
+            </p:dialog>
+            <p:dialog header="Digite sua senha para validar a operação:" widgetVar="dlgSenha" minHeight="40">
+                <p:password value="#{usuarioAbstratoBean.csenha}"/>
+                <p:spacer width="10"/>
+                <p:commandButton value="Continuar" icon="pi pi-chevron-right" action="#{usuarioAbstratoBean.validarComSenha()}" update="@form"/>
             </p:dialog>
             <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
         </h:form>

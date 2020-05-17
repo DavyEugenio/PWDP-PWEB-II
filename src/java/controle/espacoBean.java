@@ -1,9 +1,12 @@
 package controle;
 
 import DAO.EspacoDAO;
+import Excecoes.DAOEspacoVazioException;
 import Excecoes.DescricaoInvalidaException;
 import Excecoes.EspacoInvalidoException;
+import Excecoes.EspacoNaoEncontradoException;
 import entidades.Espaco;
+import entidades.UsuarioAbstrato;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -13,8 +16,8 @@ import java.util.logging.Logger;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpSession;
 
 @SessionScoped
 @ManagedBean
@@ -24,8 +27,8 @@ public class espacoBean {
     private List<Espaco> espacos = new ArrayList<>();
     EspacoDAO espacoDAO = new EspacoDAO();
     private int pid;
-    private boolean desc;
-    private boolean num;
+    private boolean desc, num;
+    private String csenha, operacao;
 
     public boolean validar() {
         if (desc) {
@@ -35,7 +38,29 @@ public class espacoBean {
         }
     }
 
+    public void validarComSenha() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        HttpSession sessao = (HttpSession) contexto.getExternalContext().getSession(false);
+        UsuarioAbstrato logado = (UsuarioAbstrato) sessao.getAttribute("logado");
+        if (!csenha.equals(logado.getSenha())) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Senha invalida!", "Verifique sua senha e tente novamente!"));
+        } else {
+            csenha = "";
+            switch (operacao) {
+                case "adicionar":
+                    operacao = "";
+                    adicionar();
+                    break;
+                case "excluir":
+                    operacao = "";
+                    excluir(espacoSelecionado);
+                    break;
+            }
+        }
+    }
+    
     public void adicionar() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
             if (!desc) {
                 espaco.setDescricao(null);
@@ -45,68 +70,79 @@ public class espacoBean {
             }
             if (validar()) {
                 if (espaco.getId() == this.pid) {
-                    espacoDAO.Salvar(this.espaco);
-                    ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
-                    ec.redirect("");
+                    espacoDAO.salvar(this.espaco);
+                    contexto.getExternalContext().getFlash().setKeepMessages(true);
+                    contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Espaço " + nome(espaco.getId()) + " salvo com êxito!"));
+                    contexto.getExternalContext().redirect("");
                 } else {
-                    espacoDAO.Aterar(this.espaco);
+                    espacoDAO.alterar(this.espaco);
+                    contexto.getExternalContext().getFlash().setKeepMessages(true);
+                    contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Espaço " + nome(espaco.getId()) + " alterado com êxito!"));
+                    contexto.getExternalContext().redirect("");
                 }
                 limpar();
             } else {
                 throw new DescricaoInvalidaException();
             }
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(espacoBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (DescricaoInvalidaException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), "Preencha o campo dados válidos e tente novamente!"));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (EspacoInvalidoException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), "Espaço já inserido anteriomente!"));
+            Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (EspacoNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Espaço não encontrado!", ex.getMessage()));
             Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void limpar() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            this.pid = espacoDAO.ProximoId();
+            this.pid = espacoDAO.proximoId();
             this.espaco = new Espaco();
             espaco.setId(pid);
             this.desc = false;
             this.num = false;
             this.espacoSelecionado = new Espaco();
+            this.csenha = "";
+            this.operacao = "";
             listar();
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void listar() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            espacos = espacoDAO.Listar();
+            espacos = espacoDAO.listar();
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (DAOEspacoVazioException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nenhum espaço encontrado!", ex.getMessage()));
+            Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void listarDisponiveis() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            espacos = espacoDAO.ListarDisponiveis();
+            espacos = espacoDAO.listarDisponiveis();
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (EspacoNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Espaço não encontrado!", "Não há espaços disponiveis no sistema!"));
+            Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -118,29 +154,75 @@ public class espacoBean {
     }
 
     public void excluir(Espaco e) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            espacoDAO.Excluir(e.getId());
+            String nome = nome(e.getId());
+            espacoDAO.excluir(e.getId());
             limpar();
-            ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
-            ec.redirect("");
+            contexto.getExternalContext().getFlash().setKeepMessages(true);
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Espaço " + nome + " excluído com êxito!"));
+            contexto.getExternalContext().redirect("");
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(espacoBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (EspacoNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Espaço não encontrado!", ex.getMessage()));
+            Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void buscar(int id) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            espaco = espacoDAO.Buscar(id);
+            espaco = espacoDAO.buscar(id);
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (EspacoNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Espaço não encontrado!", ex.getMessage()));
+            Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public String nome(int id) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        try {
+            if (id != 0) {
+                tipoBean tb = new tipoBean();
+                Espaco esp = espacoDAO.buscar(id);
+                tb.buscar(esp.getId_tipo());
+                String nome;
+                String numero;
+                if (esp.getDescricao() == null) {
+                    nome = "";
+                } else {
+                    nome = esp.getDescricao();
+                }
+                if (esp.getNumero() == 0) {
+                    numero = "";
+                } else {
+                    numero = "nº" + esp.getNumero();
+                }
+                return tb.getTipo().getNome() + " " + nome + " " + numero;
+            }
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (EspacoNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Espaço não encontrado!", ex.getMessage()));
+            Logger.getLogger(tipoBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "";
+    }
+
+    public String numero(int numero) {
+        if (numero != 0) {
+            return numero + "";
+        } else {
+            return "-";
         }
     }
 
@@ -200,41 +282,19 @@ public class espacoBean {
         this.espacoSelecionado = espacoSelecionado;
     }
 
-    public String nome(int id) {
-        try {
-            if (id != 0) {
-                tipoBean tb = new tipoBean();
-                Espaco esp = espacoDAO.Buscar(id);
-                tb.buscar(esp.getId_tipo());
-                String nome;
-                String numero;
-                if (esp.getDescricao() == null) {
-                    nome = "";
-                } else {
-                    nome = esp.getDescricao();
-                }
-                if (esp.getNumero() == 0) {
-                    numero = "";
-                } else {
-                    numero = "nº" + esp.getNumero();
-                }
-                return tb.getTipo().getNome() + " " + nome + " " + numero;
-            } else {
-                return "";
-            }
-        } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
-            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
-            return "";
-        }
+    public String getCsenha() {
+        return csenha;
     }
 
-    public String numero(int numero) {
-        if (numero != 0) {
-            return numero + "";
-        } else {
-            return "";
-        }
+    public void setCsenha(String csenha) {
+        this.csenha = csenha;
+    }
+
+    public String getOperacao() {
+        return operacao;
+    }
+
+    public void setOperacao(String operacao) {
+        this.operacao = operacao;
     }
 }

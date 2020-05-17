@@ -1,6 +1,8 @@
 package DAO;
 
+import Excecoes.DAOEspacoVazioException;
 import Excecoes.EspacoInvalidoException;
+import Excecoes.EspacoNaoEncontradoException;
 import entidades.Espaco;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +17,7 @@ public class EspacoDAO {
     public EspacoDAO() {
     }
 
-    public boolean ValidarEspaco(Espaco espaco, int chamada) throws SQLException {
+    public boolean validarEspaco(Espaco espaco, int chamada) throws SQLException {
         Connection conexao = FabricaConexao.getConexao();
         boolean validade;
         String sql;
@@ -44,8 +46,8 @@ public class EspacoDAO {
         return validade;
     }
 
-    public void Salvar(Espaco espaco) throws SQLException, EspacoInvalidoException {
-        if (ValidarEspaco(espaco, 1)) {
+    public void salvar(Espaco espaco) throws SQLException, EspacoInvalidoException {
+        if (validarEspaco(espaco, 1)) {
             Connection conexao = FabricaConexao.getConexao();
             PreparedStatement pst = conexao.prepareStatement("INSERT INTO `espaco` (`descricao`,`numero`,`status`,`id_tipo`) value (?,?,?,?)");
             pst.setString(1, espaco.getDescricao());
@@ -65,8 +67,8 @@ public class EspacoDAO {
         }
     }
 
-    public void Aterar(Espaco espaco) throws SQLException, EspacoInvalidoException {
-        if (ValidarEspaco(espaco, 2)) {
+    public void alterar(Espaco espaco) throws SQLException, EspacoInvalidoException, EspacoNaoEncontradoException {
+        if (validarEspaco(espaco, 2)) {
             Connection conexao = FabricaConexao.getConexao();
             PreparedStatement pst = conexao.prepareStatement("UPDATE `espaco` SET `descricao`=?,`numero`=?,`status`=?,`id_tipo`=? WHERE `id`=?");
             pst.setString(1, espaco.getDescricao());
@@ -78,46 +80,28 @@ public class EspacoDAO {
             pst.setBoolean(3, espaco.isStatus());
             pst.setInt(4, espaco.getId_tipo());
             pst.setInt(5, espaco.getId());
-            pst.execute();
+            if (pst.executeUpdate() == 0) {
+                FabricaConexao.fecharConexao();
+                pst.close();
+                throw new EspacoNaoEncontradoException();
+            }
             FabricaConexao.fecharConexao();
             pst.close();
-            FabricaConexao.fecharConexao();
         } else {
             throw new EspacoInvalidoException();
         }
     }
 
-    public List<Espaco> Listar() throws SQLException {
-        List<Espaco> espacos = null;
-        espacos = new ArrayList<>();
+    public List<Espaco> listar() throws SQLException, DAOEspacoVazioException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `espaco`");
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Espaco espaco = new Espaco();
-            espaco.setId(rs.getInt("id"));
-            espaco.setDescricao(rs.getString("descricao"));
-            espaco.setNumero(rs.getInt("numero"));
-            espaco.setStatus(rs.getBoolean("status"));
-            espaco.setId_tipo(rs.getInt("id_tipo"));
-            espacos.add(espaco);
-        }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return espacos;
-    }
-
-    public List<Espaco> BuscarPorTipo(int id_tipo) throws SQLException {
-        List<Espaco> espacos = null;
-        Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `espaco` WHERE id_tipo = ?");
-        pst.setInt(1, id_tipo);
-        ResultSet rs = pst.executeQuery();
-        if (rs.next() == false) {
+        if (!rs.isBeforeFirst()) {
             pst.close();
             FabricaConexao.fecharConexao();
+            throw new DAOEspacoVazioException();
         } else {
-            espacos = new ArrayList<>();
+            List<Espaco> espacos = new ArrayList<>();
             while (rs.next()) {
                 Espaco espaco = new Espaco();
                 espaco.setId(rs.getInt("id"));
@@ -127,63 +111,99 @@ public class EspacoDAO {
                 espaco.setId_tipo(rs.getInt("id_tipo"));
                 espacos.add(espaco);
             }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return espacos;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return espacos;
     }
 
-    public Espaco Buscar(int id) throws SQLException {
-        Espaco espaco = null;
+    public Espaco buscar(int id) throws SQLException, EspacoNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `espaco` WHERE `id` = ?");
         pst.setInt(1, id);
         ResultSet rs = pst.executeQuery();
-        if (rs.next() == false) {
+        if (!rs.next()) {
             pst.close();
             FabricaConexao.fecharConexao();
+            throw new EspacoNaoEncontradoException();
         } else {
-            espaco = new Espaco();
-            espaco.setId(rs.getInt("id"));
-            espaco.setDescricao(rs.getString("descricao"));
-            espaco.setNumero(rs.getInt("numero"));
-            espaco.setStatus(rs.getBoolean("status"));
-            espaco.setId_tipo(rs.getInt("id_tipo"));
-        }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return espaco;
-    }
-
-    public List<Espaco> ListarDisponiveis() throws SQLException {
-        List<Espaco> espacos = new ArrayList<>();
-        Connection conexao = FabricaConexao.getConexao();
-        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `espaco` WHERE `status` = true");
-        ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
             Espaco espaco = new Espaco();
             espaco.setId(rs.getInt("id"));
             espaco.setDescricao(rs.getString("descricao"));
             espaco.setNumero(rs.getInt("numero"));
             espaco.setStatus(rs.getBoolean("status"));
             espaco.setId_tipo(rs.getInt("id_tipo"));
-            espacos.add(espaco);
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return espaco;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return espacos;
+    }
+    
+    public List<Espaco> buscarPorTipo(int id_tipo) throws SQLException, EspacoNaoEncontradoException {
+        Connection conexao = FabricaConexao.getConexao();
+        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `espaco` WHERE id_tipo = ?");
+        pst.setInt(1, id_tipo);
+        ResultSet rs = pst.executeQuery();
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new EspacoNaoEncontradoException();
+        } else {
+            List<Espaco> espacos = new ArrayList<>();
+            while (rs.next()) {
+                Espaco espaco = new Espaco();
+                espaco.setId(rs.getInt("id"));
+                espaco.setDescricao(rs.getString("descricao"));
+                espaco.setNumero(rs.getInt("numero"));
+                espaco.setStatus(rs.getBoolean("status"));
+                espaco.setId_tipo(rs.getInt("id_tipo"));
+                espacos.add(espaco);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return espacos;
+        }
+    }
+    
+    public List<Espaco> listarDisponiveis() throws SQLException, EspacoNaoEncontradoException {
+        Connection conexao = FabricaConexao.getConexao();
+        PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `espaco` WHERE `status` = true");
+        ResultSet rs = pst.executeQuery();
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new EspacoNaoEncontradoException();
+        } else {
+            List<Espaco> espacos = new ArrayList<>();
+            while (rs.next()) {
+                Espaco espaco = new Espaco();
+                espaco.setId(rs.getInt("id"));
+                espaco.setDescricao(rs.getString("descricao"));
+                espaco.setNumero(rs.getInt("numero"));
+                espaco.setStatus(rs.getBoolean("status"));
+                espaco.setId_tipo(rs.getInt("id_tipo"));
+                espacos.add(espaco);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return espacos;
+        }
     }
 
-    public void Excluir(int id) throws SQLException {
+    public void excluir(int id) throws SQLException, EspacoNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("DELETE FROM `espaco` WHERE `id` = ?");
         pst.setInt(1, id);
-        pst.execute();
+        if (pst.executeUpdate() == 0) {
+            FabricaConexao.fecharConexao();
+            pst.close();
+            throw new EspacoNaoEncontradoException();
+        }
         pst.close();
         FabricaConexao.fecharConexao();
     }
 
-    public int ProximoId() throws SQLException {
+    public int proximoId() throws SQLException {
         int pid = 0;
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SHOW TABLE STATUS LIKE 'espaco'");

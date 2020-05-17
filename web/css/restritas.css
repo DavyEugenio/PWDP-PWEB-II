@@ -12,6 +12,7 @@ nav{
 }
 section{
     border: 0;
+    background: inherit;
 }
 footer{
     border-top: #ccc solid 1px;
@@ -39,18 +40,29 @@ footer{
     border-right: #ccc solid 1px;
 }
 .conteudo{
-    height: calc(100vh - 197px);
+    height: calc(100vh - 182px);
 }
 .divcomplementar{
     background-color: #323232;
     max-width: 1996px;
     margin: auto;
 }
+.nav-item .ui-button{
+    border: 0;
+}
+.ui-menubutton span{
+    background: inherit;
+}
+
+.ui-menubutton span{
+    font-size: 25px;
+}
+
 .ui-menubutton .ui-button-text{
     font-size: 1.3rem;
     font-family: fontS;
-    border: 0;
-    background-color: #008800;
+    border-radius: 3px;
+    background: #006600;
     color: rgba(255, 255, 255, 0.5);
 }
 .ui-menubutton:hover .ui-button-text{
@@ -78,7 +90,4 @@ footer{
         border-left: 0;
         border-right: 0;
     }
-}
-@media screen and (max-width: 1200px) {
-    
 }

@@ -8,6 +8,7 @@
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
         <title>SRO-IO</title>
+        <link rel="shortcut icon" href="images/favico.png" type="image/x-icon"/>
         <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
         <link href="css/full-width-pics.css" rel="stylesheet"/>
         <link href="css/modalimage.css" rel="stylesheet"/>
@@ -45,7 +46,7 @@
             </p:dialog>
             <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
         </h:form>
-        <nav id="navbar" class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <nav id="navbar" class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-image: url('images/2.png')">
             <div class="container">
                 <a class="navbar-brand" href="index.xhtml">SRO-EI</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,22 +78,21 @@
             </div>
         </nav>
         <div class="conteudo-topo"></div>
-        <header class="py-5 bg-image-full" style="background-image: url('images/13.jpg')">
+        <header class="py-5 bg-image-full" style="background-image: url('images/banner.jpg')">
             <h1 id='titulo'>Sistema de Reservas Online para <br/> Espaços Institucionais</h1>
             <h2>Faça a reserva do seu espaço, sendo este: Laboratorio, Sala de aula, Auditório ou Quadra.</h2>
         </header>
         <section id="sessao1" class="py-5">
             <div class="container">
-                <h1>Sobre:</h1>
+                <h2>Sobre:</h2>
                 <div id="sobre">
-                    <div id="conteudo-sobre">
-                        <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid, suscipit, rerum quos facilis repellat architecto commodi officia atque nemo facere eum non illo voluptatem quae delectus odit vel itaque amet.</p>
+                    <div id="conteudo-sobre" class="mb-4">
+                        <p class="h5">Este projeto foi desenvolvido e concebido por alunos da turma de informática 2016.1 à disciplina de Programação Web 2 e tem por fim atender ao propósito de facilitar a averiguação e controle das reservas dos espaços nas dependências do campus.</p>
                     </div>
-                    <div columns="2" id="cards" class="container">
+                    <div id="cards">
                         <div class="card">
                             <div class="card-body">
-                                <img class="modalImage" src="images/8.jpg" alt="Quadra"/>
+                                <img class="modalImage" src="images/quadra.jpg" alt="Quadra"/>
                                 <div class="overlay" onclick="abrirModal(1)">
                                     <div class="text"><h3>Quadra</h3></div>
                                 </div>
@@ -100,25 +100,41 @@
                         </div>
                         <div class="card">
                             <div class="card-body">
-                                <img class="modalImage" src="images/9.jpg" alt="Laborátorio"/>
+                                <img class="modalImage" src="images/quimica.jpg" alt="Laborátorio de Química"/>
                                 <div class="overlay" onclick="abrirModal(2)">
-                                    <div class="text"><h3>Laboratório</h3></div>
+                                    <div class="text"><h3>Laborátorio <br/> de Química</h3></div>
                                 </div>
                             </div>
                         </div>
                         <div class="card">
                             <div class="card-body">
-                                <img class="modalImage" src="images/15.png" alt="Sala de Aula"/>
+                                <img class="modalImage" src="images/info.jpg" alt="Laborátorio de Informática"/>
                                 <div class="overlay" onclick="abrirModal(3)">
+                                    <div class="text"><h3>Laborátorio de Informática</h3></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <img class="modalImage" src="images/sala.jpg" alt="Sala de Aula"/>
+                                <div class="overlay" onclick="abrirModal(4)">
                                     <div class="text"><h3>Sala de Aula</h3></div>
                                 </div>
                             </div>
                         </div>
                         <div class="card">
                             <div class="card-body">
-                                <img class="modalImage" src="images/8.jpg" alt="Quadra"/>
-                                <div class="overlay" onclick="abrirModal(1)">
-                                    <div class="text"><h3>Quadra</h3></div>
+                                <img class="modalImage" src="images/aud.jpg" alt="Auditório"/>
+                                <div class="overlay" onclick="abrirModal(5)">
+                                    <div class="text"><h3>Auditório</h3></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <img class="modalImage" src="images/agro.jpg" alt="Laborátorio de Agroindústria"/>
+                                <div class="overlay" onclick="abrirModal(6)">
+                                    <div class="text"><h3>Laborátorio de Agroindústria</h3></div>
                                 </div>
                             </div>
                         </div>
@@ -128,84 +144,76 @@
         </section>
         <section id="sessao2" class="py-5">
             <div class="container">
-                <h1>Espaços Disponiveis:</h1>
+                <h2>Espaços Disponiveis:</h2>
                 <div id="disponiveis">
-                    <div id='imagens'>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/2.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Lab. de Química</p>
-                                </h3>
-                            </div>
+                    <div class="imagem" onclick="abrirModal(2)">
+                        <div class="zoomimage">
+                            <img src="images/quimicon.png"/>
                         </div>
-                        <p:spacer width="30px"/>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/4.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Lab. de Edificações</p>
-                                </h3>
-                            </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Lab. de <br/>Química</p>
+                            </h3>
                         </div>
-                        <p:spacer width="30px"/>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/3.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Lab. de Informática </p>
-                                </h3>
-                            </div>
+                    </div>
+                    <div class="imagem">
+                        <div class="zoomimage">
+                            <img src="images/edificon.png"/>
                         </div>
-                        <p:spacer width="30px"/>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/7.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Lab. de AgroIndústria</p>
-                                </h3>
-                            </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Lab. de <br/>Edificações</p>
+                            </h3>
                         </div>
-                        <p:spacer width="30px"/>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/8.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Salas de Aula</p>
-                                </h3>
-                            </div>
+                    </div>
+                    <div class="imagem" onclick="abrirModal(3)">
+                        <div class="zoomimage">
+                            <img src="images/infoicon.png"/>
                         </div>
-                        <p:spacer width="30px"/>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/6.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Quadra Poliesportiva</p>
-                                </h3>
-                            </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Lab. de<br/>Informática </p>
+                            </h3>
                         </div>
-                        <p:spacer width="30px"/>
-                        <div class="imagem">
-                            <div class="zoomimage">
-                                <img src="images/5.png"/>
-                            </div>
-                            <div class="descricao">
-                                <h3>
-                                    <p>Auditório</p>
-                                </h3>
-                            </div>
+                    </div>
+                    <div class="imagem" onclick="abrirModal(6)">
+                        <div class="zoomimage">
+                            <img src="images/agroicon.png"/>
+                        </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Lab. de<br/>AgroIndústria</p>
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="imagem" onclick="abrirModal(4)">
+                        <div class="zoomimage">
+                            <img src="images/salaicon.png"/>
+                        </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Salas <br/>de Aula</p>
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="imagem" onclick="abrirModal(1)">
+                        <div class="zoomimage">
+                            <img src="images/quadicon.png"/>
+                        </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Quadra <br/>Poliesportiva</p>
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="imagem" onclick="abrirModal(5)">
+                        <div class="zoomimage">
+                            <img src="images/audicon.png"/>
+                        </div>
+                        <div class="descricao">
+                            <h3>
+                                <p>Auditório</p>
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -214,14 +222,38 @@
         <section id="sessao3" class="py-5">
             <div class="container">
                 <h2>Contato:</h2>
+                <div id="contato">
+                    <div>
+                        <div class="p-4 mb-3 ">
+                            <p class="mb-0 font-weight-bold h5">Endereço:</p>
+                            <p class="mb-4 h5">
+                                IF Sertão Campus Ouricuri:<br/>
+                                Estrada do Tamboril, S/N
+                                CEP: 56200-000 | Ouricuri/PE - Brasil</p>
+                            <h5 class="mb-0 font-weight-bold h5">Telefone:</h5>
+                            <p class="mb-0 h5">IF Sertão Campus Ouricuri:</p>
+                            <p class="mb-4 h5">(87) 98122-2215 / 98122-3778</p>
+                            <h5 class="mb-0 font-weight-bold h5">Email:</h5>
+                            <p class="mb-0 h5">Davy Eugênio:</p>
+                            <p class="mb-3 h5">davy.eugenio@hotmail.com</p>
+                            <p class="mb-0 h5">IF Sertão Campus Ouricuri:</p>
+                            <p class="mb-0 h5">co.comunicacao@ifsertao-pe.edu.br</p>
+                        </div>
+                    </div>
+                    <div class="card" id="imgif">
+                        <div class="card-body">
+                            <img class="modalImage" src="images/campus.jpg" alt="IF Sertão, Campus Ouricuri"/>
+                            <div class="overlay" onclick="abrirModal(7)">
+                                <div class="text"><h3>IF Sertão, Campus Ouricuri</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
-        <section id="sessao4" class="py-5 bg-image-full" style="background-image: url('/images/1.png')">
-            <div style="height: 200px"></div>
-        </section>
-        <footer class="py-5">
+        <footer class="py-5 bg-image-full" style="background-image: url('images/2.png')">
             <div class="container">
-                <p class="m-0 text-center ">Copyright &copy; Your Website 2019</p>
+                <p class="m-0 text-center ">Copyright &copy; SRO &copy; DENO <script>document.write(new Date().getFullYear());</script></p>
             </div>
         </footer>
         <div id="modalImages" class="modal">

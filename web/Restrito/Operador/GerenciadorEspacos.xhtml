@@ -7,6 +7,9 @@
              xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
     <h:body onload="#{espacoBean.limpar();tipoBean.listar()}">
         <h:form>
+            <script>
+                window.scroll(0, 0);
+            </script>
             <section>
                 <div class="bg-pgr container">
                     <h2>Gerenciador de Espaços:</h2>
@@ -35,7 +38,7 @@
                         </p:outputPanel>
                         <p:outputLabel value="Status"></p:outputLabel>
                         <p:selectBooleanButton value="#{espacoBean.espaco.status}" onLabel="Disponivel" offLabel="Indisponivel"/>
-                        <p:commandButton value="Salvar" icon="pi pi-save" action="#{espacoBean.adicionar()}" update="@form"/>
+                        <p:commandButton value="Salvar" icon="pi pi-save" onclick="PF('dlgSenha').show();" action="#{espacoBean.setOperacao('adicionar')}"/>
                         <p:commandButton value="Limpar" icon="pi pi-times" action="#{espacoBean.limpar()}" update="@form"/>
                     </p:panelGrid>
                     <h2>Espaços Salvos:</h2>
@@ -69,8 +72,9 @@
                     <p:spacer width="10px"/>
                     <p:commandButton value="Editar" icon="pi pi-pencil" action="#{espacoBean.editar(esp)}" update="@form"/>
                     <p:spacer width="5px"/>
-                    <p:commandButton value="Excluir" icon="pi pi-trash" action="#{espacoBean.excluir(esp)}" update="@form">
+                    <p:commandButton value="Excluir" icon="pi pi-trash" onclick="PF('dlgSenha').show();" action="#{espacoBean.setOperacao('excluir')}">
                         <p:confirm header="Confirmação" message="Você está certo em excluir o espaço: #{espacoBean.nome(esp.id)}?" icon="pi pi-exclamation-triangle"/>
+                        <f:setPropertyActionListener value="#{esp}" target="#{espacoBean.espacoSelecionado}" />                
                     </p:commandButton>
                 </p:column>
             </p:dataTable>
@@ -92,6 +96,11 @@
                         <h:outputText value="#{horarioBean.qtdHorariosE(espacoBean.espacoSelecionado.id)}" />
                     </p:panelGrid>
                 </p:outputPanel>
+            </p:dialog>
+            <p:dialog header="Digite sua senha para validar a operação:" widgetVar="dlgSenha" minHeight="40">
+                <p:password value="#{espacoBean.csenha}"/>
+                <p:spacer width="10"/>
+                <p:commandButton value="Continuar" icon="pi pi-chevron-right" action="#{espacoBean.validarComSenha()}" update="@form"/>
             </p:dialog>
             <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
         </h:form>

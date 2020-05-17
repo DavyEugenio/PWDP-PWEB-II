@@ -7,6 +7,9 @@
              xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
     <h:body onload="#{horarioBean.limpar();usuarioAbstratoBean.limpar()}">
         <h:form>
+            <script>
+                window.scroll(0, 0);
+            </script>
             <section>
                 <div class="bg-pgr container">
                     <h2>Busca por intervalo de tempo:</h2>
@@ -15,14 +18,14 @@
                         <p:calendar value="#{horarioBean.inicioB}" pattern="dd/MM/yyyy HH:mm"/>
                         <p:outputLabel value="Final"/>
                         <p:calendar value="#{horarioBean.finalB}" pattern="dd/MM/yyyy HH:mm"/>
-                        <p:commandButton value="Buscar" icon="pi pi-search" action="#{horarioBean.buscarIntervaloEmEspera()}" update="tabela"/>
-                        <p:commandButton value="Cancelar" icon="pi pi-times" action="#{horarioBean.cancelarBusca()}" update="tabela"/>
+                        <p:commandButton value="Buscar" icon="pi pi-search" action="#{horarioBean.buscarIntervaloEmEsperaOuEmAndamento()}" update="tabela,growl"/>
+                        <p:commandButton value="Cancelar" icon="pi pi-times" action="#{horarioBean.cancelarBusca()}" update="@form"/>
                     </p:panelGrid>
-                    <h2>Reservas em Espera:</h2>
+                    <h2>Reservas em Espera ou em Andamento:</h2>
                     <p:spacer/>
                 </div>
             </section>
-            <p:dataTable id="tabela" value="#{horarioBean.horariosEmEspera}" var="hor">
+            <p:dataTable id="tabela" value="#{horarioBean.horariosEmEsperaOuEmAndamento}" var="hor">
                 <p:column headerText="ID" width="5%" sortBy="#{hor.id}" filterBy="#{hor.id}">
                     <h:outputText value="#{hor.id}"/>
                 </p:column>
@@ -35,12 +38,14 @@
                 <p:column headerText="Saida" width="7%" sortBy="#{horarioBean.formatarHora(hor.saida)}" filterBy="#{horarioBean.formatarHora(hor.saida)}">
                     <h:outputText value="#{horarioBean.formatarHora(hor.saida)}"/>
                 </p:column>
-                <p:column headerText="Responsável" sortBy="#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.usuario.nome }" filterBy="#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.usuario.nome }">
-                    <h:outputText value="#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.usuario.nome }"/><br/>
-                    <h:outputText value="(#{usuarioAbstratoBean.buscar(hor.matricula_responsavel);usuarioAbstratoBean.getTipo(usuarioAbstratoBean.usuario)})"/>
+                <p:column headerText="Responsável" sortBy="#{usuarioAbstratoBean.buscarResponsavel(hor.matricula_responsavel)}" filterBy="#{usuarioAbstratoBean.buscarResponsavel(hor.matricula_responsavel)}">
+                    <h:outputText value="#{usuarioAbstratoBean.buscarResponsavel(hor.matricula_responsavel)}"/>
                 </p:column>
                 <p:column headerText="Espaço" width="15%" sortBy="#{espacoBean.nome(hor.id_espaco)}" filterBy="#{espacoBean.nome(hor.id_espaco)}">
                     <h:outputText value="#{espacoBean.nome(hor.id_espaco)}"/>
+                </p:column>
+                <p:column headerText="Status" width="10%" sortBy="#{hor.status}" filterBy="#{hor.status}">
+                    <h:outputText value="#{hor.status}"/>
                 </p:column>
                 <p:column headerText="Info." style="width: 40px">
                     <p:commandLink update="@form" oncomplete="PF('dialog').show()">
@@ -65,8 +70,8 @@
                         <h:outputText value="#{horarioBean.formatarHora(horarioBean.horarioSelecionado.saida)}"/>
                         <h:outputText value="Espaço reservado:"/>
                         <h:outputText value="#{espacoBean.nome(horarioBean.horarioSelecionado.id_espaco)}"/>
-                        <h:outputText value="Nome do responsável:"/>
-                        <h:outputText value="#{usuarioAbstratoBean.buscar(horarioBean.horarioSelecionado.matricula_responsavel);usuarioAbstratoBean.usuario.nome}"/>
+                        <h:outputText value="Responsável:"/>
+                        <h:outputText value="#{usuarioAbstratoBean.buscarResponsavel(horarioBean.horarioSelecionado.matricula_responsavel)}"/>
                     </p:panelGrid>
                 </p:outputPanel>
             </p:dialog>

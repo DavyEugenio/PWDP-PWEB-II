@@ -13,6 +13,7 @@
         <link href="../../css/modalimage.css" rel="stylesheet"/>
         <link href="../../vendor/bootstrap/css/bootstrap-grid.css" rel="stylesheet"/>
         <link href="../../css/restritas.css" rel="stylesheet"/>
+        <link rel="shortcut icon" href="../../images/favico.png" type="image/x-icon"/>
     </h:head>
     <h:body class="bg-dark">
         <h:form>
@@ -27,11 +28,11 @@
                             <li class="nav-item active">
                                 <p:link style="font-size: 1.3rem;font-family: fontS;" class="nav-link" value="Início"  outcome="index.xhtml?faces-redirect=true"/>
                             </li>
-                            <li class="nav-item">
+                            <li class="nav-item mr-4">
                                 <p:link style="font-size: 1.3rem;font-family: fontS;" class="nav-link" outcome="Dados" value="Seus Dados"/>
                             </li>
                             <li class="nav-item">
-                                <p:menuButton  value="Gerenciar">
+                                <p:menuButton class="ui-button-icon-right" value="Gerenciar">
                                     <p:menuitem icon="pi pi-tags" outcome="GerenciadorTipos" value="Tipos"/>
                                     <p:menuitem icon="pi pi-th-large" outcome="GerenciadorEspacos" value="Espaços"/>
                                     <p:menuitem icon="pi pi-users" outcome="GerenciadorUsuarios" value="Usuários"/>
@@ -40,7 +41,7 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#">
-                                    <p:commandButton icon="pi pi-sign-out" style="font-size: 1.3rem;font-family: fontS;" value="Sair" action="#{loginBean.sair()}">
+                                    <p:commandButton icon="pi pi-sign-out" class="ui-menubutton" value="Sair" action="#{loginBean.sair()}">
                                         <p:confirm header="Sair" message="Você está certo querer em sair?" icon="pi pi-exclamation-triangle" />
                                     </p:commandButton>
                                 </a>
@@ -67,7 +68,7 @@
         </div>
         <footer class="py-5">
             <div class="container">
-                <p class="m-0 text-center ">Copyright &copy; Your Website 2019</p>
+                <p class="m-0 text-center ">Copyright &copy; SRO &copy; DENO <script>document.write(new Date().getFullYear());</script></p>
             </div>
         </footer>
         <script src="../../js/divComplementar.js"/>

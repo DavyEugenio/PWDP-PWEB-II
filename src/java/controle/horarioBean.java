@@ -1,9 +1,14 @@
 package controle;
 
 import DAO.HorarioDAO;
+import DAO.UsuarioAbstratoDAO;
+import Excecoes.DAOHorarioVazioException;
 import Excecoes.HorarioIntercaladoException;
 import Excecoes.HorarioInvalidoException;
+import Excecoes.HorarioNaoEncontradoException;
 import Excecoes.MatriculaInvalidaException;
+import Excecoes.StatusInvalidoException;
+import Excecoes.UsuarioNaoEncontradoException;
 import util.Conversoes;
 import entidades.Horario;
 import entidades.Operador;
@@ -21,7 +26,6 @@ import java.util.logging.Logger;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpSession;
 
@@ -33,7 +37,7 @@ public class horarioBean {
     private Horario horario = new Horario(), horarioSelecionado;
     private final Conversoes c = new Conversoes();
     HorarioDAO horarioDAO = new HorarioDAO();
-    private List<Horario> horarios = new ArrayList<>(), horariosEmEspera = new ArrayList<>();
+    private List<Horario> horarios = new ArrayList<>(), horariosEmEsperaOuEmAndamento = new ArrayList<>();
     private Date horaE, horaS, data;
     private Date inicioB, finalB;
     private String status;
@@ -50,6 +54,7 @@ public class horarioBean {
     }
 
     public void adicionar() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
             horario.setEntrada(c.conversorDT(data, horaE));
             horario.setSaida(c.conversorDT(data, horaS));
@@ -58,34 +63,55 @@ public class horarioBean {
             }
             if (horario.getId() == pid) {
                 if (validar()) {
-                    horarioDAO.Salvar(horario);
-                    ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
-                    ec.redirect("");
+                    horarioDAO.salvar(horario);
+                    contexto.getExternalContext().getFlash().setKeepMessages(true);
+                    contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Reserva " + formatarData(horario.getEntrada()) + " - " + formatarHora(horario.getEntrada()) + " - " + formatarHora(horario.getSaida()) + " salva com êxito!"));
+                    contexto.getExternalContext().redirect("");
                 } else {
                     throw new HorarioInvalidoException();
                 }
             } else {
-                horario = horarioDAO.Buscar(horario.getId());
-                horario.setStatus(status);
-                horarioDAO.Alterar(horario);
+                if (status.equals("Cancelado")) {
+                    horario = horarioDAO.buscar(horario.getId());
+                    horario.setStatus(status);
+                    horarioDAO.alterar(horario);
+                    contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Reserva " + formatarData(horario.getEntrada()) + " - " + formatarHora(horario.getEntrada()) + " - " + formatarHora(horario.getSaida()) + " cancelada com êxito!"));
+                } else {
+                    if (horario.getStatus().equals("Em andamento")) {
+                        horario = horarioDAO.buscar(horario.getId());
+                        horario.setSaida(LocalDateTime.now());
+                        horario.setStatus(status);
+                        horarioDAO.alterar(horario);
+                        contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Reserva " + formatarData(horario.getEntrada()) + " - " + formatarHora(horario.getEntrada()) + " - " + formatarHora(horario.getSaida()) + " finalizanda com êxito!"));
+                    } else {
+                        throw new StatusInvalidoException();
+                    }
+                }
             }
             limpar();
-        } catch (SQLException | IOException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (HorarioIntercaladoException | HorarioInvalidoException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), "Insira um horário válido e tente novamente!"));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MatriculaInvalidaException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), "Preencha o campo com dados válidos e tente novamente!"));
-            Logger.getLogger(usuarioAbstratoBean.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (StatusInvalidoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), "Não é possivel atribuir status de \"Finalizado\" à uma reserva que não esteja \"Em andamento\""));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Reserva não encontrada!", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void limpar() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
             horario = new Horario();
             horarioSelecionado = new Horario();
@@ -94,67 +120,83 @@ public class horarioBean {
             data = c.conversorLDT(LocalDateTime.now());
             inicioB = c.conversorLDT(LocalDateTime.now());
             finalB = c.conversorLDT(LocalDateTime.now());
-            pid = horarioDAO.ProximoId();
+            pid = horarioDAO.proximoId();
             horario.setId(pid);
             disabled = false;
             status = "Em espera";
             AtualizarHorarios();
-            HttpSession sessao = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+            HttpSession sessao = (HttpSession) contexto.getExternalContext().getSession(false);
             UsuarioAbstrato logado = (UsuarioAbstrato) sessao.getAttribute("logado");
             if (!(logado instanceof Operador)) {
                 horario.setMatricula_responsavel(logado.getMatricula());
-                horarios = horarioDAO.BuscarPorResponsavel(logado.getMatricula());
+                horarios = horarioDAO.buscarPorResponsavel(logado.getMatricula());
+                listarEmEsperaOuEmAndamento();
             } else {
                 listar();
             }
-            listarEmEspera();
-        } catch (SQLException | ParseException | HorarioIntercaladoException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void cancelarBusca() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
             inicioB = c.conversorLDT(LocalDateTime.now());
             finalB = c.conversorLDT(LocalDateTime.now());
-            HttpSession sessao = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+            HttpSession sessao = (HttpSession) contexto.getExternalContext().getSession(false);
             UsuarioAbstrato logado = (UsuarioAbstrato) sessao.getAttribute("logado");
             if (!(logado instanceof Operador)) {
-                horarios = horarioDAO.BuscarPorResponsavel(logado.getMatricula());
-                listarEmEspera();
+                horarios = horarioDAO.buscarPorResponsavel(logado.getMatricula());
+                listarEmEsperaOuEmAndamento();
             } else {
                 listar();
             }
-        } catch (SQLException | ParseException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void listar() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horarios = horarioDAO.Listar();
+            horarios = horarioDAO.listar();
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (DAOHorarioVazioException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Não há reservas registradas", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void listarEmEspera() {
+    public void listarEmEsperaOuEmAndamento() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horariosEmEspera = horarioDAO.ListarEmEspera();
+            if (horarioDAO.listarEmEsperaOuEmAndamento().isEmpty()) {
+                throw new HorarioNaoEncontradoException();
+            } else {
+                horariosEmEsperaOuEmAndamento = horarioDAO.listarEmEsperaOuEmAndamento();
+            }
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Reserva não encontrada!", "Não há reservas \"Em espera\" ou \"Em andamento\""));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void editar(Horario h) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
             horario = h;
             status = h.getStatus();
@@ -163,75 +205,115 @@ public class horarioBean {
             horaS = c.conversorLDT(h.getSaida());
             disabled = true;
         } catch (ParseException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void excluir(Horario h) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horarioDAO.Excluir(h.getId());
+            horarioDAO.excluir(h.getId());
             limpar();
-            ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
-            ec.redirect("");
-        } catch (SQLException | IOException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
+            contexto.getExternalContext().getFlash().setKeepMessages(true);
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operação bem sucedida!", "Reserva " + formatarData(horario.getEntrada()) + " - " + formatarHora(horario.getEntrada()) + " - " + formatarHora(horario.getSaida()) + " excluída com êxito!"));
+            contexto.getExternalContext().redirect("");
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Reserva não encontrada!", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void buscar(int id) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horario = horarioDAO.Buscar(id);
+            horario = horarioDAO.buscar(id);
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Reserva não encontrada!", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void buscarPorResponsavel(String matricula) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horarios = horarioDAO.BuscarPorResponsavel(matricula);
+            horarios = horarioDAO.buscarPorResponsavel(matricula);
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public int qtdHorariosR(String matricula) {
-        buscarPorResponsavel(matricula);
-        if (horarios == null) {
-            return 0;
-        } else {
-            return horarios.size();
-        }
-    }
-
-    public int qtdHorariosEmEspera(String matricula) {
+    public String qtdHorariosR(String matricula) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            if (horarioDAO.BuscarPorEmEspera(matricula) == null) {
-                return 0;
+            UsuarioAbstratoDAO uadao = new UsuarioAbstratoDAO();
+            if (uadao.buscar(matricula) instanceof Operador) {
+                return "-";
             } else {
-                return horarioDAO.BuscarPorEmEspera(matricula).size();
+                buscarPorResponsavel(matricula);
+                if (horarios == null) {
+                    return "0";
+                } else {
+                    return horarios.size() + "";
+                }
             }
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UsuarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Usuário não encontrado!", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return 0;
+        return "-";
+    }
+
+    public String qtdHorariosEmEsperaOuEmAndamento(String matricula) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        try {
+            UsuarioAbstratoDAO uadao = new UsuarioAbstratoDAO();
+            if (uadao.buscar(matricula) instanceof Operador) {
+                return "-";
+            } else {
+                if (horarioDAO.buscarPorEmEsperaOuEmAndamento(matricula) == null) {
+                    HttpSession sessao = (HttpSession) contexto.getExternalContext().getSession(false);
+                    UsuarioAbstrato logado = (UsuarioAbstrato) sessao.getAttribute("logado");
+                    if (!(logado instanceof Operador)) {
+                        throw new HorarioNaoEncontradoException();
+                    }
+                    return 0 + "";
+                } else {
+                    return horarioDAO.buscarPorEmEsperaOuEmAndamento(matricula).size() + "";
+                }
+            }
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Reserva não encontrada!", "Não há reservas \"Em espera\" ou \"Em andamento\""));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UsuarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Usuário não encontrado!", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0 + "";
     }
 
     public void buscarPorEspaco(int id) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horarios = horarioDAO.BuscarPorEspaco(id);
+            horarios = horarioDAO.buscarPorEspaco(id);
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -246,43 +328,81 @@ public class horarioBean {
     }
 
     public void buscarIntervalo() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horarios = horarioDAO.BuscarPorIntervalo(c.conversorDT2(inicioB), c.conversorDT2(finalB));
+            horarios = horarioDAO.buscarPorIntervalo(c.conversorDT2(inicioB), c.conversorDT2(finalB));
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Reserva não encontrada!", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void buscarIntervaloEmEspera() {
+    public void buscarIntervaloEmEsperaOuEmAndamento() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            horariosEmEspera = horarioDAO.BuscarPorIntervaloEmEspera(c.conversorDT2(inicioB), c.conversorDT2(finalB));
+            horariosEmEsperaOuEmAndamento = horarioDAO.buscarPorIntervaloEmEsperaOuEmAndamento(c.conversorDT2(inicioB), c.conversorDT2(finalB));
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Reserva não encontrada!", ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void buscarIntervaloResponsaveis() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            HttpSession sessao = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+            HttpSession sessao = (HttpSession) contexto.getExternalContext().getSession(false);
             UsuarioAbstrato logado = (UsuarioAbstrato) sessao.getAttribute("logado");
-            horarios = horarioDAO.BuscarPorIntervaloPorResponsavel(c.conversorDT2(inicioB), c.conversorDT2(finalB), logado.getMatricula());
+            horarios = horarioDAO.buscarPorIntervaloPorResponsavel(c.conversorDT2(inicioB), c.conversorDT2(finalB), logado.getMatricula());
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Reserva não encontrada!", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void AtualizarHorarios() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        try {
+            horarioDAO.atualizarStatus();
+        } catch (SQLException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioNaoEncontradoException ex) {
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (HorarioIntercaladoException ex) {
             contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void AtualizarHorarios() throws SQLException, HorarioIntercaladoException {
-        horarioDAO.AtualizarStatus();
+    public boolean disabledEditar(Horario horario) {
+        if (horario.getStatus().equals("Em espera")) {
+            return false;
+        } else {
+            return !horario.getStatus().equals("Em andamento");
+        }
     }
 
-    public boolean disabledEditar(Horario horario) {
-        return !horario.getStatus().equals("Em espera");
+    public String formatarHora(LocalDateTime h) {
+        if (h != null) {
+            return h.format(DateTimeFormatter.ofPattern("HH:mm"));
+        }
+        return "";
+    }
+
+    public String formatarData(LocalDateTime h) {
+        if (h != null) {
+            return h.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        }
+        return "";
     }
 
     public Horario getHorario() {
@@ -389,25 +509,11 @@ public class horarioBean {
         this.horarioSelecionado = horarioSelecionado;
     }
 
-    public List<Horario> getHorariosEmEspera() {
-        return horariosEmEspera;
+    public List<Horario> getHorariosEmEsperaOuEmAndamento() {
+        return horariosEmEsperaOuEmAndamento;
     }
 
-    public void setHorariosEmEspera(List<Horario> horariosEmEspera) {
-        this.horariosEmEspera = horariosEmEspera;
-    }
-    
-    public String formatarHora(LocalDateTime h) {
-        if (h != null) {
-            return h.format(DateTimeFormatter.ofPattern("HH:mm"));
-        }
-        return "";
-    }
-
-    public String formatarData(LocalDateTime h) {
-        if (h != null) {
-            return h.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        }
-        return "";
+    public void setHorariosEmEsperaOuEmAndamento(List<Horario> horariosEmEsperaOuEmAndamento) {
+        this.horariosEmEsperaOuEmAndamento = horariosEmEsperaOuEmAndamento;
     }
 }

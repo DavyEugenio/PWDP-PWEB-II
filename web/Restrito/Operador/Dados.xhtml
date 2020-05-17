@@ -23,33 +23,52 @@
         <section>
             <div class="bg-pgr container conteudo">
                 <h2>Seus Dados:</h2>
-                <p:panelGrid columns="2">
+                <p:panelGrid id="dados" columns="2">
                     <p:outputLabel value="Matricula:"/>
                     <p:outputLabel value="#{usuarioAbstratoBean.logado.matricula}"/>
                     <p:outputLabel value="Nome:"/>
                     <p:outputLabel value="#{usuarioAbstratoBean.logado.nome}"/>
                     <h:form>
-                        <h:outputLink value="javascript:void(0)" onclick="PF('dlg').show();">
+                        <h:outputLink value="javascript:void(0)" onclick="PF('dlgSenha').show();">
                             <p:commandButton icon="pi pi-key" value="Mudar a senha"/>
                         </h:outputLink>
-                        <p:dialog header="Redefinir Senha" widgetVar="dlg" resizable="false">
-                            <h:panelGrid columns="2" cellpadding="5">
-                                <h:outputLabel value="Senha antiga:" />
-                                <p:password value="#{usuarioAbstratoBean.asenha}" required="true"/>
-                                <h:outputLabel value="Nova senha:" />
-                                <p:password value="#{usuarioAbstratoBean.nsenha}" required="true" feedback="true"
-                                            promptLabel="Informe sua nova senha" weakLabel="Senha fraca"
-                                            goodLabel="Senha razoável" strongLabel="Otima senha" />
-                                <h:outputLabel for="csenha" value="Repita a nova senha:" />
-                                <p:password value="#{usuarioAbstratoBean.csenha}" required="true"/>
-                                <f:facet name="footer">
-                                    <p:commandButton icon="pi pi-save" value="Salvar" update="@form" action="#{usuarioAbstratoBean.redefinirSenha()}" oncomplete="formSenha()" />
-                                </f:facet>  
-                            </h:panelGrid>
-                        </p:dialog>
-                        <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
+                    </h:form>
+                    <h:form><h:outputLink value="javascript:void(0)" onclick="PF('dlgNome').show();">
+                            <p:commandButton icon="pi pi-pencil" value="Mudar o nome"/>
+                        </h:outputLink>
                     </h:form>
                 </p:panelGrid>
+                <h:form id="alterarSenha">
+                    <p:dialog header="Redefinir Senha" widgetVar="dlgSenha" resizable="false">
+                        <h:panelGrid columns="2" cellpadding="5">
+                            <h:outputLabel value="Senha antiga:" />
+                            <p:password value="#{usuarioAbstratoBean.asenha}" required="true"/>
+                            <h:outputLabel value="Nova senha:" />
+                            <p:password value="#{usuarioAbstratoBean.nsenha}" required="true" feedback="true"
+                                        promptLabel="Informe sua nova senha" weakLabel="Senha fraca"
+                                        goodLabel="Senha razoável" strongLabel="Otima senha" />
+                            <h:outputLabel for="csenha" value="Repita a nova senha:" />
+                            <p:password value="#{usuarioAbstratoBean.csenha}" required="true"/>
+                            <f:facet name="footer">
+                                <p:commandButton icon="pi pi-save" value="Salvar" update="alterarSenha,growl,dados" action="#{usuarioAbstratoBean.redefinirSenha()}" oncomplete="formSenha()" />
+                            </f:facet>  
+                        </h:panelGrid>
+                    </p:dialog>
+                </h:form>
+                <h:form id="alterarNome">
+                    <p:dialog header="Alterar Nome" widgetVar="dlgNome" resizable="false">
+                        <h:panelGrid columns="2" cellpadding="5">
+                            <h:outputLabel value="Nome:" />
+                            <p:inputText value="#{usuarioAbstratoBean.nome}" placeholder="#{usuarioAbstratoBean.logado.nome}" required="true"/>
+                            <h:outputLabel value="Digite sua senha para validar a operação:" />
+                            <p:password value="#{usuarioAbstratoBean.csenha}" required="true"/>
+                            <f:facet name="footer">
+                                <p:commandButton icon="pi pi-save" value="Salvar" update="alterarNome,growl,dados" action="#{usuarioAbstratoBean.alterarNome()}" oncomplete="formSenha()" />
+                            </f:facet>  
+                        </h:panelGrid>
+                    </p:dialog>
+                </h:form>
+                <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
             </div>
         </section>
     </body>

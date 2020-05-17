@@ -1,0 +1,36 @@
+DROP DATABASE pwdp;
+CREATE DATABASE pwdp; 
+USE pwdp;
+CREATE TABLE `usuario`(
+	`matricula` VARCHAR(14) NOT NULL,
+	`nome` VARCHAR(200) NOT NULL, 
+	`senha` VARCHAR(300) NOT NULL,
+	`classe` VARCHAR(11) NOT NULL,
+	CONSTRAINT pk5 PRIMARY KEY(`matricula`)
+);
+CREATE TABLE `tipo`(
+    `id` INT(9) NOT NULL AUTO_INCREMENT,
+    `nome` VARCHAR(50) NULL,
+    CONSTRAINT pk3 PRIMARY KEY(`id`)
+);
+CREATE TABLE `espaco`(
+    `id` INT(9) NOT NULL AUTO_INCREMENT,
+    `descricao` VARCHAR(50) NULL,
+    `numero` INT(9) NULL,
+    `status` boolean NOT NULL,
+    `id_tipo` INT(9) NOT NULL,
+    CONSTRAINT pk2 PRIMARY KEY(`id`),
+    CONSTRAINT fk1 FOREIGN KEY(`id_tipo`) REFERENCES `tipo`(`id`)
+);
+CREATE TABLE `horario`(
+    `id` INT(9) NOT NULL AUTO_INCREMENT,
+    `entrada` DATETIME NOT NULL,
+    `saida` DATETIME NOT NULL,
+    `matricula_usuario` VARCHAR(14) NOT NULL,
+    `id_espaco` INT(9) NOT NULL,
+    `status` VARCHAR(20) NOT NULL,
+    CONSTRAINT pk4 PRIMARY KEY(`id`),
+    CONSTRAINT fk2 FOREIGN KEY(`matricula_usuario`) REFERENCES `usuario`(`matricula`),
+    CONSTRAINT fk3 FOREIGN KEY(`id_espaco`) REFERENCES `espaco`(`id`)
+);
+INSERT INTO `usuario`(`matricula`, `nome`, `senha`, `classe`) VALUES ('0000001','Admim','0000001','operador');

@@ -1,11 +1,14 @@
 package controle;
 
 import DAO.UsuarioAbstratoDAO;
+import Excecoes.UsuarioNaoEncontradoException;
 import entidades.Operador;
 import entidades.UsuarioAbstrato;
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -42,34 +45,34 @@ public class loginBean implements Serializable {
     }
 
     public String login() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
         try {
-            usuarioLogado = dao.Login(matricula, senha);
-            if (usuarioLogado != null) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("logado");
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("logado", usuarioLogado);
-                if (usuarioLogado instanceof Operador) {
-                    return "/Restrito/Operador/index.xhtml?faces-redirect=true";
-                } else {
-                    return "/Restrito/Responsaveis/index.xhtml?faces-redirect=true";
-                }
+            usuarioLogado = dao.login(matricula, senha);
+            contexto.getExternalContext().getSessionMap().remove("logado");
+            contexto.getExternalContext().getSessionMap().put("logado", usuarioLogado);
+            contexto.getExternalContext().getFlash().setKeepMessages(true);
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Seja bem vindo " + usuarioLogado.getNome() + "!", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy"))));
+            if (usuarioLogado instanceof Operador) {
+                return "/Restrito/Operador/index.xhtml?faces-redirect=true";
             } else {
-                FacesContext contexto = FacesContext.getCurrentInstance();
-                contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Usuário e/ou senha inválidos!", "Verifique seus dados e tente novamente!"));
+                return "/Restrito/Responsaveis/index.xhtml?faces-redirect=true";
             }
         } catch (SQLException ex) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), ex.getMessage()));
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro SQL", ex.getMessage()));
+            Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UsuarioNaoEncontradoException ex) {
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Usuário e/ou senha inválidos!", "Verifique seus dados e tente novamente!"));
             Logger.getLogger(horarioBean.class.getName()).log(Level.SEVERE, null, ex);
         }
         return "/index.xhtml?faces-redirect=false";
-
     }
 
     public String sair() throws IOException {
         limpar();
-        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("logado");
-        FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
-        ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        contexto.getExternalContext().getSessionMap().remove("logado");
+        contexto.getExternalContext().invalidateSession();
+        ExternalContext ec = contexto.getExternalContext();
         ec.redirect("../../index.xhtml?faces-redirect=true");
         return "/index.xhtml?faces-redirect=true";
     }
@@ -85,7 +88,7 @@ public class loginBean implements Serializable {
             }
         }
     }
-    
+
     public String getMatricula() {
         return matricula;
     }

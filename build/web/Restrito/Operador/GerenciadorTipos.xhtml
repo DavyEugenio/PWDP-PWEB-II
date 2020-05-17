@@ -4,18 +4,21 @@
              xmlns:ui="http://java.sun.com/jsf/facelets"
              template="template.xhtml"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
-    
+
     <h:body onload="#{tipoBean.limpar()}">
         <h:form>
+            <script>
+                window.scroll(0, 0);
+            </script>
             <section>
                 <div class="bg-pgr container">
-                    <h2>Gerenciador de Tipos:</h2>
+                    <h2>Gerenciador de Tipos de Espaço:</h2>
                     <p:panelGrid columns="2">
                         <p:outputLabel value="ID"/>
                         <p:outputLabel>#{tipoBean.tipo.id}</p:outputLabel>
                         <h:outputLabel value="Nome"/>
                         <p:inputText value="#{tipoBean.tipo.nome}"/>
-                        <p:commandButton value="Salvar" icon="pi pi-save" action="#{tipoBean.adicionar()}" update="@form"/>
+                        <p:commandButton value="Salvar" icon="pi pi-save" onclick="PF('dlgSenha').show();" action="#{tipoBean.setOperacao('adicionar')}"/>
                         <p:commandButton value="Limpar" icon="pi pi-times" action="#{tipoBean.limpar()}" update="@form"/>
                     </p:panelGrid>
                     <h2>Tipos Salvos:</h2>
@@ -37,8 +40,9 @@
                     <p:spacer width="10px"/>
                     <p:commandButton value="Editar" icon="pi pi-pencil" action="#{tipoBean.editar(tip)}" update="@form"/>
                     <p:spacer width="5px"/>
-                    <p:commandButton value="Excluir" icon="pi pi-trash" action="#{tipoBean.excluir(tip)}" update="@form">
+                    <p:commandButton value="Excluir" icon="pi pi-trash" onclick="PF('dlgSenha').show();" action="#{tipoBean.setOperacao('excluir')}">
                         <p:confirm header="Confirmação" message="Você está certo em excluir o tipo: #{tip.nome}?" icon="pi pi-exclamation-triangle" />
+                        <f:setPropertyActionListener value="#{tip}" target="#{tipoBean.tipoSelecionado}" />
                     </p:commandButton>
                 </p:column>
             </p:dataTable>
@@ -54,6 +58,11 @@
                         <h:outputText value="#{tipoBean.tipoSelecionado.nome}" />
                     </p:panelGrid>
                 </p:outputPanel>
+            </p:dialog>
+            <p:dialog header="Digite sua senha para validar a operação:" widgetVar="dlgSenha" minHeight="40">
+                <p:password value="#{tipoBean.csenha}"/>
+                <p:spacer width="10"/>
+                <p:commandButton value="Continuar" icon="pi pi-chevron-right" action="#{tipoBean.validarComSenha()}" update="@form"/>
             </p:dialog>
             <p:growl id="growl" sticky="true" showDetail="true" life="3000" />
         </h:form>

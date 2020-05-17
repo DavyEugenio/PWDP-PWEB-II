@@ -1,6 +1,8 @@
 package DAO;
 
+import Excecoes.DAOTipoVazioException;
 import Excecoes.TipoInvalidoException;
+import Excecoes.TipoNaoEncontradoException;
 import entidades.Tipo;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +17,7 @@ public class TipoDAO {
     public TipoDAO() {
     }
 
-    public boolean ValidarTipo(Tipo tipo, int chamada) throws SQLException {
+    public boolean validarTipo(Tipo tipo, int chamada) throws SQLException {
         Connection conexao = FabricaConexao.getConexao();
         boolean validade;
         String sql;
@@ -42,8 +44,8 @@ public class TipoDAO {
         return validade;
     }
 
-    public void Salvar(Tipo tipo) throws SQLException, TipoInvalidoException {
-        if (ValidarTipo(tipo, 1)) {
+    public void salvar(Tipo tipo) throws SQLException, TipoInvalidoException {
+        if (validarTipo(tipo, 1)) {
             Connection conexao = FabricaConexao.getConexao();
             PreparedStatement pst = conexao.prepareStatement("INSERT INTO `tipo` (`nome`) value (?)");
             pst.setString(1, tipo.getNome());
@@ -56,14 +58,17 @@ public class TipoDAO {
         }
     }
 
-    public void Aterar(Tipo tipo) throws SQLException, TipoInvalidoException {
-        if (ValidarTipo(tipo, 2)) {
+    public void alterar(Tipo tipo) throws SQLException, TipoInvalidoException, TipoNaoEncontradoException {
+        if (validarTipo(tipo, 2)) {
             Connection conexao = FabricaConexao.getConexao();
             PreparedStatement pst = conexao.prepareStatement("UPDATE `tipo` set `nome`=? WHERE `id`=?");
             pst.setString(1, tipo.getNome());
             pst.setInt(2, tipo.getId());
-            pst.execute();
-            FabricaConexao.fecharConexao();
+            if (pst.executeUpdate() == 0) {
+                pst.execute();
+                FabricaConexao.fecharConexao();
+                throw new TipoNaoEncontradoException();
+            }
             pst.close();
             FabricaConexao.fecharConexao();
         } else {
@@ -71,50 +76,61 @@ public class TipoDAO {
         }
     }
 
-    public List<Tipo> Listar() throws SQLException {
+    public List<Tipo> listar() throws SQLException, DAOTipoVazioException {
         List<Tipo> tipos = new ArrayList<>();
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `tipo`");
         ResultSet rs = pst.executeQuery();
-        while (rs.next()) {
-            Tipo tipo = new Tipo();
-            tipo.setId(rs.getInt("id"));
-            tipo.setNome(rs.getString("nome"));
-            tipos.add(tipo);
+        if (!rs.isBeforeFirst()) {
+            pst.close();
+            FabricaConexao.fecharConexao();
+            throw new DAOTipoVazioException();
+        } else {
+            while (rs.next()) {
+                Tipo tipo = new Tipo();
+                tipo.setId(rs.getInt("id"));
+                tipo.setNome(rs.getString("nome"));
+                tipos.add(tipo);
+            }
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return tipos;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return tipos;
     }
 
-    public Tipo Buscar(int id) throws SQLException {
-        Tipo tipo = null;
+    public Tipo buscar(int id) throws SQLException, TipoNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SELECT * FROM `tipo` WHERE `id` = ?");
         pst.setInt(1, id);
         ResultSet rs = pst.executeQuery();
-        if (rs.next() == false) {
+        if (!rs.next()) {
             pst.close();
             FabricaConexao.fecharConexao();
+            throw new TipoNaoEncontradoException();
         } else {
-            tipo = new Tipo();
+            Tipo tipo = new Tipo();
             tipo.setId(rs.getInt("id"));
             tipo.setNome(rs.getString("nome"));
+            pst.close();
+            FabricaConexao.fecharConexao();
+            return tipo;
         }
-        pst.close();
-        FabricaConexao.fecharConexao();
-        return tipo;
     }
 
-    public void Excluir(int id) throws SQLException {
+    public void excluir(int id) throws SQLException, TipoNaoEncontradoException {
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("DELETE FROM `tipo` WHERE `id` = ?");
         pst.setInt(1, id);
+        if (pst.executeUpdate() == 0) {
+            pst.execute();
+            FabricaConexao.fecharConexao();
+            throw new TipoNaoEncontradoException();
+        }
         pst.execute();
         FabricaConexao.fecharConexao();
     }
 
-    public int ProximoId() throws SQLException {
+    public int proximoId() throws SQLException {
         int pid = 0;
         Connection conexao = FabricaConexao.getConexao();
         PreparedStatement pst = conexao.prepareStatement("SHOW TABLE STATUS LIKE 'tipo'");
